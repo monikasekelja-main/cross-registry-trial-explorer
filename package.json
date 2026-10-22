@@ -1,5 +1,6 @@
 {
   "name": "cross-registry-trial-explorer",
+  "author": "monikasekelja-main (https://github.com/monikasekelja-main)",
   "description": "Search ClinicalTrials.gov and EU CTIS through one MCP server, with versioned source records and local search.",
   "version": "0.1.0",
   "private": true,
