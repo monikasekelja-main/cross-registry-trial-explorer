@@ -1,0 +1,28 @@
+{
+  "name": "cross-registry-trial-explorer",
+  "description": "Search ClinicalTrials.gov and EU CTIS through one MCP server, with versioned source records and local search.",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "sync": "node src/cli.mjs sync",
+    "search": "node src/cli.mjs search",
+    "start": "node src/cli.mjs serve",
+    "start:mcp": "node src/mcp-stdio.mjs",
+    "test:mcp": "node --test test/mcp.test.mjs",
+    "mcp:config": "node scripts/mcp-config.mjs",
+    "smoke:live": "node scripts/smoke-live.mjs",
+    "smoke:mcp:live": "node scripts/smoke-mcp-live.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/server": "2.3.1",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/client": "2.3.1"
+  }
+}
