@@ -61,6 +61,7 @@ for (const mode of ['legacy', 'auto']) {
       { name: 'get_trial', arguments: { source: 'ctgov', id: '../../etc/passwd' } },
       { name: 'search_trials', arguments: { query: '   ' } },
       { name: 'search_trials', arguments: { query: 'melanoma', sources: [] } },
+      { name: 'search_trials', arguments: { query: 'melanoma', searchMode: 'invalid' } },
       { name: 'search_imported_trials', arguments: { limit: 101 } },
       { name: 'search_imported_trials', arguments: { unknownFilter: true } },
     ]) assert.equal((await client.callTool(args)).isError, true);
@@ -74,8 +75,9 @@ for (const mode of ['legacy', 'auto']) {
 test('live MCP search returns this call only, caches records and preserves partial failures', async t => {
   let calls = 0; let failCtis = false;
   const { client, store } = await inMemory(t, {
-    ctgov: { collect: async ({ query, limit, signal }) => {
+    ctgov: { collect: async ({ query, searchMode, limit, signal }) => {
       assert.equal(query, 'melanoma'); assert.equal(limit, 1); assert.equal(signal.aborted, false); calls++;
+      assert.equal(searchMode, 'condition');
       return collection('ctgov', 'NCT00000002');
     } },
     ctis: { collect: async () => { if (failCtis) throw new Error('CTIS unavailable'); return collection('ctis'); } },
@@ -83,6 +85,10 @@ test('live MCP search returns this call only, caches records and preserves parti
   store.commitSource('ctgov', collection('ctgov'), {}, time);
   const live = output(await client.callTool({ name: 'search_trials', arguments: { query: 'melanoma', limitPerSource: 1 } }));
   assert.equal(live.status, 'ok'); assert.equal(live.returned, 2);
+  assert.equal(live.searchMode, 'condition');
+  assert.deepEqual(live.sources[0].searchCriteria, { 'query.term': 'AREA[Condition]"melanoma"' });
+  assert.deepEqual(live.sources[1].searchCriteria, { medicalCondition: 'melanoma' });
+  assert.equal(store.sourceStatus()[0].lastSuccess.scope.searchMode, 'condition');
   assert.equal(live.sources[0].records[0].sourceId, 'NCT00000002');
   assert.equal(store.search().totalCount, 3);
   failCtis = true;
@@ -90,6 +96,19 @@ test('live MCP search returns this call only, caches records and preserves parti
   assert.equal(partial.status, 'partial_failure'); assert.equal(partial.returned, 1);
   assert.equal(partial.sources[1].status, 'failed'); assert.equal(partial.sources[1].records, undefined);
   assert.equal(store.search({ source: 'ctis' }).totalCount, 1); assert.equal(calls, 2);
+});
+
+test('MCP keyword opt-in reaches the adapter and is recorded in result provenance', async t => {
+  const { client, store } = await inMemory(t, { ctgov: { collect: async ({ query, searchMode }) => {
+    assert.equal(query, 'AREA[Condition]melanoma'); assert.equal(searchMode, 'keyword');
+    return collection('ctgov');
+  } } });
+  const broad = output(await client.callTool({ name: 'search_trials', arguments: {
+    query: 'AREA[Condition]melanoma', sources: ['ctgov'], searchMode: 'keyword',
+  } }));
+  assert.equal(broad.searchMode, 'keyword');
+  assert.deepEqual(broad.sources[0].searchCriteria, { 'query.term': 'AREA[Condition]melanoma' });
+  assert.equal(store.sourceStatus()[0].lastSuccess.scope.searchMode, 'keyword');
 });
 
 test('all upstream failures become an explicit MCP tool error', async t => {

@@ -2,6 +2,18 @@ import { JsonClient, SourceError } from './http-client.mjs';
 
 export const SOURCES = ['ctgov', 'ctis'];
 export const NORMALIZER_VERSION = '2';
+export function buildSearchCriteria(source, query = '', searchMode = 'condition') {
+  if (!SOURCES.includes(source)) throw new Error('Source must be ctgov or ctis');
+  if (!['condition', 'keyword'].includes(searchMode)) throw new Error('searchMode must be condition or keyword');
+  if (typeof query !== 'string' || query.length > 500) throw new Error('query must be at most 500 characters');
+  query = query.trim();
+  if (!query) return {};
+  if (searchMode === 'condition' && query.includes('"')) {
+    throw new Error('Condition search takes plain condition text without double quotes. Use searchMode="keyword" for registry query expressions.');
+  }
+  if (source === 'ctgov') return { 'query.term': searchMode === 'condition' ? `AREA[Condition]"${query}"` : query };
+  return { [searchMode === 'condition' ? 'medicalCondition' : 'containAny']: query };
+}
 export const SOURCE_INFO = {
   ctgov: {
     name: 'ClinicalTrials.gov', access: 'Documented public API v2',
@@ -127,14 +139,15 @@ export function createAdapters({ clients = {} } = {}) {
   const ctis = clients.ctis ?? new JsonClient();
   return {
     ctgov: {
-      async collect({ query = '', limit = 10, signal }) {
+      async collect({ query = '', searchMode = 'condition', limit = 10, signal }) {
+        const searchCriteria = buildSearchCriteria('ctgov', query, searchMode);
         const records = []; const seen = new Set(); const tokens = new Set(); let token; let upstreamTotal = null;
         do {
           const url = new URL('https://clinicaltrials.gov/api/v2/studies');
           url.searchParams.set('format', 'json'); url.searchParams.set('countTotal', 'true');
           url.searchParams.set('pageSize', String(Math.min(100, limit - records.length)));
           url.searchParams.set('sort', 'LastUpdatePostDate:desc');
-          if (query) url.searchParams.set('query.term', query);
+          for (const [key, value] of Object.entries(searchCriteria)) url.searchParams.set(key, value);
           if (token) url.searchParams.set('pageToken', token);
           const page = object(await ctgov.json(url, { signal }), 'ClinicalTrials.gov page');
           if (!Array.isArray(page.studies)) throw new SourceError('ClinicalTrials.gov page is missing studies');
@@ -157,13 +170,14 @@ export function createAdapters({ clients = {} } = {}) {
       },
     },
     ctis: {
-      async collect({ query = '', limit = 10, signal }) {
+      async collect({ query = '', searchMode = 'condition', limit = 10, signal }) {
+        const searchCriteria = buildSearchCriteria('ctis', query, searchMode);
         const records = []; const seen = new Set(); let pageNumber = 1;
         do {
           const page = object(await ctis.json('https://euclinicaltrials.eu/ctis-public-api/search', {
             signal, method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ pagination: { page: pageNumber, size: Math.min(100, limit) },
-              sort: { property: 'decisionDate', direction: 'DESC' }, searchCriteria: { containAny: query || null } }),
+              sort: { property: 'decisionDate', direction: 'DESC' }, searchCriteria }),
           }), 'CTIS search page');
           if (!Array.isArray(page.data)) throw new SourceError('CTIS search page is missing data');
           const pagination = object(page.pagination, 'CTIS pagination');

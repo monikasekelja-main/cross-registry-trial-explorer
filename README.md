@@ -63,20 +63,24 @@ Then try:
 
 | Tool | What it does |
 |---|---|
-| `search_trials` | Searches the live registries and saves the returned records. Searches both sources by default. |
+| `search_trials` | Searches condition fields in both live registries and saves the returned records. Broad keyword search is optional. |
 | `search_imported_trials` | Searches records already saved on your computer. |
 | `get_trial` | Opens a saved record. Set `includeRaw` to `true` to include its original source data. |
 | `get_source_status` | Shows saved-record counts, previous imports, and source failures. |
 
 A live search returns up to **5 records per source by default**. You can request up to 20 per source. Larger searches take longer because CTIS retrieves each trial’s details separately.
 
-Live search accepts `query`, optional `sources` (`ctgov` and/or `ctis`), and `limitPerSource`. Saved-record search also supports country and recruitment-status filters. For example:
+Enter a plain condition name such as `melanoma` or `non-small cell lung cancer`. By default, live search checks the registered condition fields, rather than mentions elsewhere in the record. No manual query wrapper is needed.
+
+Live search accepts `query`, optional `sources` (`ctgov` and/or `ctis`), `limitPerSource`, and `searchMode`. Saved-record search also supports country and recruitment-status filters. For example:
 
 ```json
 {"query": "melanoma", "sources": ["ctgov", "ctis"], "limitPerSource": 2}
 ```
 
 These are arguments for `search_trials`, not a terminal command.
+
+For drugs, sponsors, trial IDs, or a broad search across other fields, explicitly choose `"searchMode": "keyword"`. Registry query expressions also belong in keyword mode. Condition mode uses a literal condition phrase on ClinicalTrials.gov; there is no automatic synonym expansion or switch to broad search when nothing matches. Each response includes the mode and the exact criteria sent to each registry.
 
 ## Understand the results
 
@@ -98,6 +102,9 @@ Run these commands from the project folder:
 ```sh
 # Fetch and save five records from each registry.
 node src/cli.mjs sync --query melanoma --limit 5
+
+# Opt into a broad keyword search instead of condition search.
+node src/cli.mjs sync --query pembrolizumab --searchMode keyword --limit 5
 
 # Search the records you have saved.
 node src/cli.mjs search --q melanoma

@@ -17,8 +17,12 @@ try {
   assert.notEqual(live.isError, true, JSON.stringify(live.content));
   assert.equal(live.structuredContent.status, 'ok');
   assert.equal(live.structuredContent.sources.length, 2);
+  assert.equal(live.structuredContent.searchMode, 'condition');
   for (const source of live.structuredContent.sources) {
     assert.equal(source.status, 'ok'); assert.equal(source.records.length, 2);
+    assert.deepEqual(source.searchCriteria, source.source === 'ctgov'
+      ? { 'query.term': 'AREA[Condition]"melanoma"' } : { medicalCondition: 'melanoma' });
+    for (const record of source.records) assert.ok(record.conditions.some(condition => /melanoma/i.test(condition)), `Unexpected condition for ${record.sourceId}`);
     const first = source.records[0];
     const detail = await client.callTool({ name: 'get_trial', arguments: { source: first.source, id: first.sourceId } });
     assert.notEqual(detail.isError, true); assert.equal(detail.structuredContent.sourceId, first.sourceId);
@@ -30,6 +34,8 @@ try {
     tools: tools.tools.map(t => t.name), live: live.structuredContent, cached: cached.structuredContent, sources: status.structuredContent, stderr };
   writeFileSync(new URL('.data/mcp-live-smoke-report.json', root), JSON.stringify(report, null, 2) + '\n');
   console.log(JSON.stringify({ status: report.live.status, tools: report.tools,
-    sources: report.live.sources.map(s => ({ source: s.source, imported: s.imported, upstreamTotal: s.upstreamTotal })),
+    searchMode: report.live.searchMode,
+    sources: report.live.sources.map(s => ({ source: s.source, imported: s.imported, upstreamTotal: s.upstreamTotal,
+      searchCriteria: s.searchCriteria, conditions: s.records.map(r => ({ id: r.sourceId, conditions: r.conditions })) })),
     returned: report.live.returned, report: fileURLToPath(new URL('.data/mcp-live-smoke-report.json', root)) }, null, 2));
 } finally { await client.close(); }

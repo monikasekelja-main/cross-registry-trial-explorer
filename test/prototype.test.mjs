@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { once } from 'node:events';
 import { Store, canonical } from '../src/store.mjs';
-import { normalizeCtgov, normalizeCtis, createAdapters } from '../src/adapters.mjs';
+import { normalizeCtgov, normalizeCtis, createAdapters, buildSearchCriteria } from '../src/adapters.mjs';
 import { JsonClient, SourceError, retryAfterMs, isTransient } from '../src/http-client.mjs';
 import { sync } from '../src/sync.mjs';
 import { createApi } from '../src/server.mjs';
@@ -16,6 +16,56 @@ function collection(source = 'ctgov') {
 }
 function storeFor(t) { const store = new Store(':memory:'); t.after(() => store.close()); return store; }
 function importOne(store, source = 'ctgov', data = collection(source)) { store.commitSource(source, data, { mode: 'test' }, time); }
+
+test('condition names use scoped fields, including multiword and punctuation-bearing names', () => {
+  for (const query of ['melanoma', 'non-small cell lung cancer', "Alzheimer's disease", 'melanoma OR lung cancer']) {
+    assert.deepEqual(buildSearchCriteria('ctgov', query), { 'query.term': `AREA[Condition]"${query}"` });
+    assert.deepEqual(buildSearchCriteria('ctis', query), { medicalCondition: query });
+  }
+  assert.throws(() => buildSearchCriteria('ctgov', 'melanoma" OR AREA[Condition]cancer'), /plain condition text/);
+  assert.throws(() => buildSearchCriteria('ctis', 'melanoma', 'invalid'), /searchMode/);
+  assert.deepEqual(buildSearchCriteria('ctgov'), {});
+});
+
+test('condition search excludes incidental broad hits before applying the requested limit', async () => {
+  const lung = ctgovRecord('NCT00000003');
+  lung.protocolSection.conditionsModule.conditions = ['Non-Small Cell Lung Cancer'];
+  lung.protocolSection.descriptionModule = { briefSummary: 'Prior melanoma is an exclusion.' };
+  const melanoma = [ctgovRecord(), ctgovRecord('NCT00000002')];
+  const requested = [];
+  const adapter = createAdapters({ clients: { ctgov: { json: async url => {
+    const query = url.searchParams.get('query.term'); requested.push(query);
+    assert.equal(url.searchParams.get('pageSize'), '2');
+    return { studies: query === 'AREA[Condition]"melanoma"' ? melanoma : [lung, melanoma[0]], totalCount: 2 };
+  } } } }).ctgov;
+  const focused = await adapter.collect({ query: 'melanoma', limit: 2 });
+  assert.deepEqual(focused.records.map(x => x.trial.sourceId), ['NCT00000001','NCT00000002']);
+  const broad = await adapter.collect({ query: 'melanoma', searchMode: 'keyword', limit: 2 });
+  assert.equal(broad.records[0].trial.sourceId, 'NCT00000003');
+  assert.deepEqual(requested, ['AREA[Condition]"melanoma"', 'melanoma']);
+});
+
+test('keyword mode preserves expressions and CTIS broad search is explicit', async () => {
+  const expression = 'AREA[Condition]melanoma OR AREA[InterventionName]pembrolizumab';
+  assert.deepEqual(buildSearchCriteria('ctgov', expression, 'keyword'), { 'query.term': expression });
+  let criteria;
+  const adapter = createAdapters({ clients: { ctis: { json: async (_url, options) => {
+    criteria = JSON.parse(options.body).searchCriteria;
+    return { data: [], pagination: { totalRecords: 0, nextPage: false } };
+  } } } }).ctis;
+  await adapter.collect({ query: 'melanoma', searchMode: 'keyword' });
+  assert.deepEqual(criteria, { containAny: 'melanoma' });
+});
+
+test('zero condition matches do not trigger a broader fallback', async () => {
+  let calls = 0;
+  const adapter = createAdapters({ clients: { ctgov: { json: async url => {
+    calls++; assert.equal(url.searchParams.get('query.term'), 'AREA[Condition]"rare condition"');
+    return { studies: [], totalCount: 0 };
+  } } } }).ctgov;
+  const response = await adapter.collect({ query: 'rare condition', limit: 2 });
+  assert.equal(response.records.length, 0); assert.equal(response.upstreamTotal, 0); assert.equal(calls, 1);
+});
 
 test('normalization preserves false, missing fields, partial dates, and original statuses', () => {
   const trial = normalizeCtgov(ctgovRecord(), time);
@@ -68,6 +118,7 @@ test('CTIS uses POST search, GET detail, fixed page sizes, and validates details
   const adapter = createAdapters({ clients: { ctis: { json: async (url, options) => {
     if (options.method === 'POST') {
       const body = JSON.parse(options.body); sizes.push(body.pagination.size);
+      assert.deepEqual(body.searchCriteria, { medicalCondition: 'melanoma' });
       const ids = body.pagination.page === 1 ? ['2026-500001-01-00','2026-500002-01-00'] : ['2026-500003-01-00'];
       return { data: ids.map(ctisSummary), pagination: { nextPage: body.pagination.page === 1, totalRecords: 3 } };
     }
@@ -166,6 +217,7 @@ test('sync validates scope before performing any network calls', async t => {
   const store = storeFor(t);
   await assert.rejects(sync(store, { sources: ['other'] }), /Sources/);
   await assert.rejects(sync(store, { limit: -1 }), /limit/);
+  await assert.rejects(sync(store, { searchMode: 'invalid' }), /searchMode/);
 });
 test('HTTP API supports search, raw provenance, history and explicit failures', async t => {
   const store = storeFor(t); importOne(store);

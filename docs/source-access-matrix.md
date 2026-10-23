@@ -1,6 +1,6 @@
 # Source-access matrix
 
-Evaluated **22 October 2026**. This distinguishes documented access, observed live behavior, and access that still needs investigation. “Public” describes visibility, not a blanket redistribution licence. Only ClinicalTrials.gov and CTIS were live-probed in this prototype.
+Evaluated **22 October 2026**; condition-search endpoints rechecked **23 October 2026**. This distinguishes documented access, observed live behavior, and access that still needs investigation. “Public” describes visibility, not a blanket redistribution licence. Only ClinicalTrials.gov and CTIS were live-probed in this prototype.
 
 ## Prioritization
 
@@ -23,11 +23,13 @@ Evaluated **22 October 2026**. This distinguishes documented access, observed li
 ### ClinicalTrials.gov
 
 ```http
-GET https://clinicaltrials.gov/api/v2/studies?format=json&countTotal=true&pageSize=2&sort=LastUpdatePostDate%3Adesc&query.term=melanoma
+GET https://clinicaltrials.gov/api/v2/studies?format=json&countTotal=true&pageSize=2&sort=LastUpdatePostDate%3Adesc&query.term=AREA%5BCondition%5D%22melanoma%22
 Accept: application/json
 ```
 
 Observed HTTP 200 and a JSON object containing `studies`, `totalCount`, and `nextPageToken`. The adapter follows the opaque token until it reaches its explicit import bound or the source is exhausted. Tests also cover repeating tokens and malformed envelopes.
+
+Condition mode is the default: plain condition text becomes `AREA[Condition]"<condition>"` in `query.term`, with multiword names kept as one phrase. This excludes hits found only in other fields. Explicit keyword mode sends the supplied text or registry expression directly as `query.term`. No client-side removal changes the source's reported total.
 
 Normalized inputs: NCT ID, title, condition and intervention text, lead sponsor, phase labels, countries from sites, explicit overall recruitment status, result availability, and last posted update date. The original full response record is retained. No enrollment-sentinel exclusion changes the requested source cohort.
 
@@ -41,11 +43,13 @@ Content-Type: application/json
 {
   "pagination": { "page": 1, "size": 2 },
   "sort": { "property": "decisionDate", "direction": "DESC" },
-  "searchCriteria": { "containAny": "melanoma" }
+  "searchCriteria": { "medicalCondition": "melanoma" }
 }
 ```
 
 Observed HTTP 200 with `data[]` and `pagination.{totalRecords,currentPage,totalPages,nextPage,prevPage}`. This differs from some third-party descriptions of the response; the adapter is based on the live `data` envelope. It keeps page size fixed while advancing page number.
+
+Condition mode uses `medicalCondition`. Explicit keyword mode uses `containAny`. Both were live-probed; their totals differ because they search different fields. CTIS applies its own matching semantics, so its condition search is not assumed identical to the ClinicalTrials.gov phrase search.
 
 ```http
 GET https://euclinicaltrials.eu/ctis-public-api/retrieve/2025-524405-33-00
@@ -58,7 +62,7 @@ Normalized inputs include title, conditions, products, sponsor, country names, s
 
 ### Refresh and failure policy
 
-This prototype imports selected samples. It does not claim that `decisionDate` order is an incremental update feed; this is particularly important for amendments to older CTIS trials. Every import records query, limit, source search semantics, truncation, upstream total, and success/failure. Existing data remain available after failures.
+This prototype imports selected samples. It does not claim that `decisionDate` order is an incremental update feed; this is particularly important for amendments to older CTIS trials. Every import records query, search mode, exact source criteria, limit, truncation, upstream total, and success/failure. Existing data remain available after failures. Older imports retain the scope metadata captured when they ran; changing the default does not reclassify saved records.
 
 The provisional rate is one outbound request per second per source per process. This is an implementation choice, not evidence of a published rate limit. A deployed shared service needs coordinated limits across workers. Production access confirmation, complete synchronization, and freshness targets remain next steps.
 
@@ -66,6 +70,6 @@ The provisional rate is one outbound request per second per source per process. 
 
 Completed: live reads from both sources; bounded two-source import; source-specific validation; raw version retention; local common search; disclosed source counts, freshness, and partial failures; automated regression tests.
 
-MCP is now available over one stdio server: live search of both registries, cached search, imported-record retrieval, and source diagnostics. This transport does not change either source's access status or reuse limitations. See the [connection guide](../README.md#connect-an-mcp-client) and [MCP verification](verification.md#mcp-verification).
+MCP is now available over one stdio server: live search of both registries, cached search, imported-record retrieval, and source diagnostics. This transport does not change either source's access status or reuse limitations. See the [connection guide](../README.md#set-up) and [MCP verification](verification.md#mcp-verification).
 
 Before treating either source as a production mirror: document intended-use permissions, agreed or supported automation, source update semantics, import checkpoints, completeness reconciliation, removals, and the acceptable maximum data age. For CTIS, request a supported feed/API contract if available; keep the portal endpoint isolated so it can be replaced.

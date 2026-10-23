@@ -5,7 +5,7 @@ import { createApi } from './server.mjs';
 import { validateId } from './adapters.mjs';
 
 const usage = `Usage (Node.js 24+):
-  node src/cli.mjs sync [--source all|ctgov|ctis] [--query melanoma] [--limit 5] [--db PATH]
+  node src/cli.mjs sync [--source all|ctgov|ctis] [--query melanoma] [--searchMode condition|keyword] [--limit 5] [--db PATH]
   node src/cli.mjs search [--q melanoma] [--country Italy] [--source ctis] [--limit 20] [--cursor TOKEN] [--db PATH]
   node src/cli.mjs get SOURCE ID [--db PATH]
   node src/cli.mjs status [--db PATH]
@@ -13,7 +13,7 @@ const usage = `Usage (Node.js 24+):
 
 try {
   const { values, positionals } = parseArgs({ allowPositionals: true, options: Object.fromEntries(
-    ['source','query','q','limit','db','port','country','recruitmentStatus','cursor'].map(k => [k, { type: 'string' }])) });
+    ['source','query','searchMode','q','limit','db','port','country','recruitmentStatus','cursor'].map(k => [k, { type: 'string' }])) });
   const [command, source, id] = positionals;
   if (!['sync','search','get','status','serve'].includes(command)) throw new Error(usage);
   const store = new Store(values.db);
@@ -25,7 +25,7 @@ try {
     let result;
     if (command === 'sync') {
       result = await sync(store, { sources: !values.source || values.source === 'all' ? undefined : [values.source],
-        query: values.query, limit: values.limit === undefined ? 10 : Number(values.limit), signal: controller.signal });
+        query: values.query, searchMode: values.searchMode, limit: values.limit === undefined ? 10 : Number(values.limit), signal: controller.signal });
       if (result.status !== 'ok') process.exitCode = 1;
     } else if (command === 'search') {
       result = store.search({ q: values.q, source: values.source, country: values.country,
