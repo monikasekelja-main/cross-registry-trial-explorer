@@ -1,6 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/server';
 import * as z from 'zod/v4';
-import { SOURCES, createAdapters, validateId } from './adapters.mjs';
+import { SOURCES, createAdapters, validateId, STUDY_TYPES } from './adapters.mjs';
 import { QueryError } from './store.mjs';
 import { sync } from './sync.mjs';
 
@@ -11,6 +11,7 @@ const localAnnotations = { readOnlyHint: true, destructiveHint: false, idempoten
 
 function result(value, isError = false) {
   const text = JSON.stringify(value);
+  value = JSON.parse(text);
   if (Buffer.byteLength(text) > 1_000_000) {
     return result({ reason: 'response_too_large', message: 'Response exceeds 1 MB. Reduce the result limit or call get_trial with includeRaw=false.' }, true);
   }
@@ -25,21 +26,24 @@ export function createMcpServer(store, { adapters = createAdapters() } = {}) {
 
   server.registerTool('search_trials', {
     title: 'Search ClinicalTrials.gov, CTIS and ISRCTN',
-    description: 'Run a live condition-focused search of all three registries (or selected sources). By default, searches the Condition field in ClinicalTrials.gov, medicalCondition in CTIS and condition in ISRCTN, rather than incidental mentions anywhere in the record. Use searchMode=keyword for broad searches, drug names, sponsors, IDs, or registry query expressions. Returns only records fetched by this call, grouped by source, and caches them locally. Reports exact source searchCriteria and separate upstream totals; do not sum them or treat registrations as unique trials. Source failures are explicit; old cached matches are not substituted. CTIS authorisation is not recruitment. Returns at most 20 results per source; allow up to two minutes.',
+    description: 'Run a live condition-focused search of all three registries (or selected sources). By default, searches the Condition field in ClinicalTrials.gov, medicalCondition in CTIS and condition in ISRCTN, rather than incidental mentions anywhere in the record. Use searchMode=keyword for broad searches, drug names, sponsors, IDs, or registry query expressions. Returns only records fetched by this call, grouped by source, and caches them locally. Reports exact source searchCriteria and separate upstream totals; do not sum them or treat registrations as unique trials. Optional recruitmentStatus, studyType and primaryPurpose filters are combined with AND. Local filters scan bounded candidates; fewer results do not prove registry exhaustion. Source failures are explicit; old cached matches are not substituted. CTIS authorisation is not recruitment. Returns at most 20 results per source; allow up to two minutes.',
     inputSchema: z.object({
       query: z.string().trim().min(1).max(500).describe('Plain condition name, e.g. melanoma or non-small cell lung cancer. No quotes or AREA[] wrapper needed. For broad keywords or registry expressions, set searchMode=keyword.'),
       searchMode: z.enum(['condition', 'keyword']).default('condition').describe('condition (default): search registered condition fields, using a literal phrase on ClinicalTrials.gov. keyword: broad registry search, preserving the supplied text or query expression. No automatic synonym expansion or fallback to keyword mode.'),
+      recruitmentStatus: recruitmentSchema.optional().describe('Required recruitment status; unknown does not match recruiting. CTIS is country-level; ISRCTN uses its published WHO status.'),
+      studyType: z.enum(STUDY_TYPES).optional().describe('Study design. Interventional alone does not mean treatment.'),
+      primaryPurpose: z.literal('treatment').optional().describe('Require explicit treatment/therapy purpose. Excludes unknown, diagnostic, observational and follow-up-only records without treatment scope.'),
       sources: z.array(sourceSchema).min(1).max(3).optional().describe('Sources to query. Omit to search all three: ctgov, ctis and isrctn.'),
       limitPerSource: z.number().int().min(1).max(20).default(5).describe('Maximum registrations fetched per source; defaults to 5. CTIS fetches one detail record per result.'),
     }).strict(),
     outputSchema,
     // Upstream is read-only, but the tool deliberately updates the local cache.
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
-  }, async ({ query, searchMode, sources, limitPerSource }, ctx) => {
+  }, async ({ query, searchMode, recruitmentStatus, studyType, primaryPurpose, sources, limitPerSource }, ctx) => {
     const signal = AbortSignal.any([ctx.mcpReq.signal, AbortSignal.timeout(120000)]);
-    const response = await sync(store, { sources, query, searchMode, limit: limitPerSource, signal, adapters, includeRecords: true });
+    const response = await sync(store, { sources, query, searchMode, recruitmentStatus, studyType, primaryPurpose, limit: limitPerSource, signal, adapters, includeRecords: true });
     const returned = response.sources.reduce((n, s) => n + (s.records?.length ?? 0), 0);
-    return result({ ...response, query, searchMode, limitPerSource, returned, bounded: true, countUnit: 'source_records',
+    return result({ ...response, query, searchMode, filters: { recruitmentStatus, studyType, primaryPurpose }, limitPerSource, returned, bounded: true, countUnit: 'source_records',
       notice: 'Only this call\'s fetched records are returned. Upstream totals use different search semantics and are not deduplicated. Use get_source_status for cached coverage; source failures do not mean zero matching trials.' }, response.sources.every(s => s.status === 'failed'));
   });
 
@@ -50,7 +54,9 @@ export function createMcpServer(store, { adapters = createAdapters() } = {}) {
       q: z.string().max(500).default('').describe('Local keyword query. Empty returns all imported records.'),
       source: sourceSchema.optional(),
       country: z.string().trim().min(1).max(100).optional().describe('Exact country name, case-insensitive; not a radius search.'),
-      recruitmentStatus: recruitmentSchema.optional().describe('Explicit normalized recruitment status. CTIS is unknown until recruitment-event interpretation is implemented.'),
+      recruitmentStatus: recruitmentSchema.optional().describe('Normalized recruitment status as stored at import time.'),
+      studyType: z.enum(STUDY_TYPES).optional(),
+      primaryPurpose: z.literal('treatment').optional(),
       limit: z.number().int().min(1).max(100).default(20).describe('Records per local page, 1–100.'),
       cursor: z.string().min(1).max(4096).optional().describe('Opaque nextCursor from the same query and limit. Do not invent or edit it.'),
     }).strict(),

@@ -14,7 +14,7 @@ export function createApi(store) {
       if (url.pathname === '/healthz') return send(200, { status: 'ok', revision: store.revision() });
       if (url.pathname === '/sources') return send(200, { sources: store.sourceStatus() });
       if (url.pathname === '/trials') {
-        const allowed = new Set(['q','source','country','recruitmentStatus','limit','cursor']);
+        const allowed = new Set(['q','source','country','recruitmentStatus','studyType','primaryPurpose','limit','cursor']);
         for (const key of url.searchParams.keys()) {
           if (!allowed.has(key) || url.searchParams.getAll(key).length !== 1) throw new QueryError(`Unsupported or repeated parameter: ${key}`);
         }

@@ -58,7 +58,7 @@ Accept: application/json
 
 Observed HTTP 200 with `ctNumber`, `ctStatus`, `authorizedApplication.authorizedPartI`, country-specific `authorizedPartsII`, and other trial information. The importer requires a returned trial ID and rejects an empty detail object. Both search row and detail are retained as source evidence. No authentication workaround or browser impersonation is used.
 
-Normalized inputs include title, conditions, products, sponsor, country names, source phase text, regulatory status, country regulatory status and recruitment-start flags, source update date, and explicit NCT references. `Authorised` and numeric status suffixes are **not** mapped to recruiting. Full recruitment-event interpretation and numeric code-list mappings need a separate validated implementation.
+Normalized inputs include title, conditions, products, sponsor, country names, source phase text, regulatory status, country regulatory status and recruitment-start flags, source update date, and explicit NCT references. `Authorised` and numeric status suffixes are **not** mapped to recruiting. Recruitment filtering now uses verified public status codes; full recruitment-event interpretation remains outside this implementation.
 
 ### ISRCTN
 
@@ -69,7 +69,7 @@ Accept: application/xml, text/xml
 
 Verified 24 October 2026: HTTP 200, `allTrials` with `totalCount="59"` and two `fullTrial` records. Condition mode uses the documented `condition` constraint with quoted plain text; keyword mode passes the supplied expression unchanged. Totals are approximate according to the API documentation and are not unique cross-registry trial counts. No API key, browser session or scraping is used.
 
-The XML parser validates the document and rejects DTD/entity declarations. Requests share existing pacing, timeout, retry, cancellation and response-size bounds. Each fullTrial is retained as parsed XML data (attributes prefixed `@_`). Normalization preserves title, conditions, interventions, sponsor, countries, phase, source update time, explicit secondary registry IDs and source link. Only explicit recruitment overrides are mapped; dates and overall completion do not imply recruitment. Results evidence gives `hasResults=true`; absence remains unknown.
+The XML parser validates the document and rejects DTD/entity declarations. Requests share existing pacing, timeout, retry, cancellation and response-size bounds. Each fullTrial is retained as parsed XML data (attributes prefixed `@_`). Normalization preserves title, conditions, interventions, sponsor, countries, phase, source update time, explicit secondary registry IDs and source link. Unfiltered queries map explicit overrides; recruitment-filtered queries add the registry’s WHO-format status. Dates and overall completion are not used for local inference. Results evidence gives `hasResults=true`; absence remains unknown.
 
 ### Refresh and failure policy
 
@@ -84,3 +84,14 @@ Completed: live reads from all three sources; bounded three-source import; sourc
 MCP is now available over one stdio server: live search of all three registries, cached search, imported-record retrieval, and source diagnostics. This transport does not change either source's access status or reuse limitations. See the [connection guide](../README.md#set-up) and [MCP verification](verification.md#mcp-verification).
 
 Before treating any source as a production mirror: document intended-use permissions, agreed or supported automation, source update semantics, import checkpoints, completeness reconciliation, removals, and the acceptable maximum data age. For CTIS, request a supported feed/API contract if available; keep the portal endpoint isolated so it can be replaced.
+
+
+## Recruitment and study-type filters — 24 October 2026
+
+Live and saved searches support AND-combined `recruitmentStatus`, `studyType` and `primaryPurpose: treatment`. Unknown values never satisfy an explicit filter. Normalizer version 3 adds study classifications and recruitment provenance; old cached records are not silently reclassified.
+
+- ClinicalTrials.gov: `filter.overallStatus=RECRUITING` plus `AREA[StudyType]INTERVENTIONAL AND AREA[DesignPrimaryPurpose]TREATMENT`. Values are checked again against normalized records. Study definitions: [official protocol fields](https://clinicaltrials.gov/policy/protocol-definitions).
+- CTIS: observed portal criteria `status: [3,4]` matches Authorised/recruiting and Ongoing/recruiting. Normalization uses `ctPublicStatusCode` (2 pending, 3/4 recruiting, 5 recruitment ended, 6/7 halted/suspended, 8 ended). Regulatory `ctStatus=Authorised` alone never establishes recruitment. Scope code `3` in `trialDetails.trialInformation.trialObjective.trialScopes` is Therapy. Mappings checked against the public portal’s own code lists and live records; [EMA status definitions](https://www.ema.europa.eu/en/documents/other/clinical-trial-information-system-ctis-public-portal-summary_en.pdf). CTIS covers interventional medicinal-product trials, but safety/efficacy scope alone is not treated as explicit Therapy. This conservative mapping can omit treatment studies without that scope.
+- ISRCTN: published `recruitment_status` is retrieved from `/api/query/format/who`, joined to default-format full records by ID and preserved under `raw.who`. Missing/mismatched exports fail explicitly. The registry documents status derivation from recruitment dates; no local date inference is made. `primaryStudyDesign` supplies study type; modern purpose or legacy `trialTypes/trialType=Treatment` supplies treatment classification. The documented `recruitmentStatus` query returned zero even without a condition in live checks, so this implementation does not rely on that constraint. Condition search for melanoma also excludes records mentioning only non-melanoma in the condition field; mixed conditions retaining a melanoma mention remain eligible.
+
+CTIS scans up to max(40, requested limit) details; filtered ISRCTN searches inspect up to max(100, requested limit) records. Filters apply before the result limit. A truncated scan is not a complete search; source totals may describe candidates before local filtering. Scan counts, coverage and total scope are exposed and saved in import history. Requests retain existing size/time/pacing bounds. Trial scope and recruitment describe registry classifications, not individual patient suitability or guaranteed site availability.

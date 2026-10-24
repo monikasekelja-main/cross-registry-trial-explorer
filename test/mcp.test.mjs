@@ -171,3 +171,19 @@ test('default MCP search includes ISRCTN, caches parsed XML and isolates its fai
   assert.equal(partial.status, 'partial_failure'); assert.equal(partial.returned, 2);
   assert.equal(partial.sources[2].records, undefined);
 });
+
+test('MCP exposes filters, passes them to adapters and applies them to saved search', async t => {
+  const filters = { recruitmentStatus: 'recruiting', studyType: 'interventional', primaryPurpose: 'treatment' };
+  const { client } = await inMemory(t, { ctgov: { collect: async args => {
+    for (const key of Object.keys(filters)) assert.equal(args[key], filters[key]);
+    const data = collection('ctgov'); Object.assign(data.records[0].trial, filters); return data;
+  } } });
+  const args = { query: 'melanoma', sources: ['ctgov'], ...filters };
+  const live = output(await client.callTool({ name: 'search_trials', arguments: args }));
+  assert.deepEqual(live.filters, filters); assert.equal(live.returned, 1);
+  const cached = output(await client.callTool({ name: 'search_imported_trials', arguments: filters }));
+  assert.equal(cached.totalCount, 1);
+  for (const invalid of [{ studyType: 'treatment' }, { recruitmentStatus: 'open' }, { studyType: 'observational', primaryPurpose: 'treatment' }]) {
+    assert.equal((await client.callTool({ name: 'search_trials', arguments: { query: 'melanoma', sources: ['ctgov'], ...invalid } })).isError, true);
+  }
+});

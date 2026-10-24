@@ -2,7 +2,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { createHash } from 'node:crypto';
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
-import { SOURCES, SOURCE_INFO } from './adapters.mjs';
+import { SOURCES, SOURCE_INFO, validateFilters } from './adapters.mjs';
 
 export function canonical(value) {
   if (Array.isArray(value)) return `[${value.map(canonical).join(',')}]`;
@@ -59,7 +59,7 @@ export class Store {
       }
       this.db.prepare("UPDATE metadata SET value=value+1 WHERE key='revision'").run();
       this.db.prepare('INSERT INTO runs(source,started_at,finished_at,status,scope,imported) VALUES (?,?,?,?,?,?)')
-        .run(source, startedAt, now, 'ok', JSON.stringify({ ...scope, upstreamTotal: collection.upstreamTotal, truncated: collection.truncated }), collection.records.length);
+        .run(source, startedAt, now, 'ok', JSON.stringify({ ...scope, scanned: collection.scanned, filterCoverage: collection.filterCoverage, upstreamTotalScope: collection.upstreamTotalScope, upstreamTotal: collection.upstreamTotal, truncated: collection.truncated }), collection.records.length);
       this.db.exec('COMMIT');
     } catch (error) { this.db.exec('ROLLBACK'); throw error; }
   }
@@ -87,17 +87,18 @@ export class Store {
   history(source, id) {
     return this.db.prepare('SELECT hash,captured_at,normalizer_version FROM versions WHERE source=? AND source_id=? ORDER BY captured_at,hash').all(source, id);
   }
-  search({ q = '', source, country, recruitmentStatus, limit, cursor } = {}) {
+  search({ q = '', source, country, recruitmentStatus, studyType, primaryPurpose, limit, cursor } = {}) {
     if (typeof q !== 'string' || q.length > 500) throw new QueryError('q must be at most 500 characters');
     if (source && !SOURCES.includes(source)) throw new QueryError('Unknown source');
     if (country && (typeof country !== 'string' || country.length > 100)) throw new QueryError('Invalid country');
     if (recruitmentStatus && !['unknown','recruiting','not_yet_recruiting','active_not_recruiting','completed','terminated','withdrawn','suspended','by_invitation'].includes(recruitmentStatus)) throw new QueryError('Unknown recruitmentStatus');
+    try { validateFilters({ recruitmentStatus, studyType, primaryPurpose }); } catch (error) { throw new QueryError(error.message); }
     limit = integer(limit, 20, 100);
     // One SQLite read transaction pins count, records, cursor revision, and freshness together.
     this.db.exec('BEGIN');
     try {
       const revision = this.revision();
-      const signature = hash({ q, source: source ?? null, country: country ?? null, recruitmentStatus: recruitmentStatus ?? null, limit });
+      const signature = hash({ q, source: source ?? null, country: country ?? null, recruitmentStatus: recruitmentStatus ?? null, studyType: studyType ?? null, primaryPurpose: primaryPurpose ?? null, limit });
       let offset = 0;
       if (cursor) {
         let decoded;
@@ -118,6 +119,9 @@ export class Store {
       if (source) { clauses.push('r.source=?'); params.push(source); }
       if (country) { clauses.push("EXISTS (SELECT 1 FROM json_each(r.normalized,'$.countries') WHERE value = ? COLLATE NOCASE)"); params.push(country); }
       if (recruitmentStatus) { clauses.push("json_extract(r.normalized,'$.recruitmentStatus')=?"); params.push(recruitmentStatus); }
+      for (const [key, value] of Object.entries({ studyType, primaryPurpose })) {
+        if (value) { clauses.push(`json_extract(r.normalized,'$.${key}')=?`); params.push(value); }
+      }
       const where = clauses.length ? ` WHERE ${clauses.join(' AND ')}` : '';
       const totalCount = Number(this.db.prepare(`SELECT count(*) AS count FROM records r${where}`).get(...params).count);
       const rows = this.db.prepare(`SELECT r.normalized,r.version_hash FROM records r${where} ORDER BY r.source,r.source_id LIMIT ? OFFSET ?`).all(...params, limit, offset);

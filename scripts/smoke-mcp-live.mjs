@@ -4,6 +4,9 @@ import assert from 'node:assert/strict';
 import { Client } from '@modelcontextprotocol/client';
 import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
 
+import { buildSearchCriteria, matchesFilters } from '../src/adapters.mjs';
+const filters = process.argv.includes('--filtered') ? { recruitmentStatus: 'recruiting', studyType: 'interventional', primaryPurpose: 'treatment' } : {};
+
 const root = new URL('../', import.meta.url);
 mkdirSync(new URL('.data/', root), { recursive: true });
 const client = new Client({ name: 'clinical-trials-live-check', version: '1.0.0' });
@@ -13,15 +16,15 @@ let stderr = ''; transport.stderr.on('data', chunk => { stderr += chunk; });
 try {
   await client.connect(transport);
   const tools = await client.listTools();
-  const live = await client.callTool({ name: 'search_trials', arguments: { query: 'melanoma', limitPerSource: 2 } }, { timeout: 150000 });
+  const live = await client.callTool({ name: 'search_trials', arguments: { query: 'melanoma', limitPerSource: 2, ...filters } }, { timeout: 150000 });
   assert.notEqual(live.isError, true, JSON.stringify(live.content));
   assert.equal(live.structuredContent.status, 'ok');
   assert.equal(live.structuredContent.sources.length, 3);
   assert.equal(live.structuredContent.searchMode, 'condition');
   for (const source of live.structuredContent.sources) {
     assert.equal(source.status, 'ok'); assert.equal(source.records.length, 2);
-    assert.deepEqual(source.searchCriteria, source.source === 'ctgov'
-      ? { 'query.term': 'AREA[Condition]"melanoma"' } : source.source === 'ctis' ? { medicalCondition: 'melanoma' } : { q: 'condition:"melanoma"' });
+    assert.deepEqual(source.searchCriteria, buildSearchCriteria(source.source, 'melanoma', 'condition', filters));
+    for (const record of source.records) assert.equal(matchesFilters(record, filters), true);
     for (const record of source.records) assert.ok(record.conditions.some(condition => /melanoma/i.test(condition)), `Unexpected condition for ${record.sourceId}`);
     const first = source.records[0];
     const detail = await client.callTool({ name: 'get_trial', arguments: { source: first.source, id: first.sourceId } });
@@ -32,10 +35,10 @@ try {
   assert.notEqual(cached.isError, true); assert.notEqual(status.isError, true);
   const report = { executedAt: new Date().toISOString(), runtime: process.version, server: client.getServerVersion(),
     tools: tools.tools.map(t => t.name), live: live.structuredContent, cached: cached.structuredContent, sources: status.structuredContent, stderr };
-  writeFileSync(new URL('.data/mcp-live-smoke-report.json', root), JSON.stringify(report, null, 2) + '\n');
+  writeFileSync(new URL(filters.recruitmentStatus ? '.data/mcp-filtered-smoke-report.json' : '.data/mcp-live-smoke-report.json', root), JSON.stringify(report, null, 2) + '\n');
   console.log(JSON.stringify({ status: report.live.status, tools: report.tools,
     searchMode: report.live.searchMode,
     sources: report.live.sources.map(s => ({ source: s.source, imported: s.imported, upstreamTotal: s.upstreamTotal,
       searchCriteria: s.searchCriteria, conditions: s.records.map(r => ({ id: r.sourceId, conditions: r.conditions })) })),
-    returned: report.live.returned, report: fileURLToPath(new URL('.data/mcp-live-smoke-report.json', root)) }, null, 2));
+    returned: report.live.returned, report: fileURLToPath(new URL(filters.recruitmentStatus ? '.data/mcp-filtered-smoke-report.json' : '.data/mcp-live-smoke-report.json', root)) }, null, 2));
 } finally { await client.close(); }

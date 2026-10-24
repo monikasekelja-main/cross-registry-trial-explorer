@@ -72,13 +72,32 @@ A live search returns up to **5 records per source by default**. You can request
 
 Enter a plain condition name such as `melanoma` or `non-small cell lung cancer`. By default, live search checks the registered condition fields, rather than mentions elsewhere in the record. No manual query wrapper is needed.
 
-Live search accepts `query`, optional `sources` (`ctgov`, `ctis` and/or `isrctn`), `limitPerSource`, and `searchMode`. Saved-record search also supports country and recruitment-status filters. For example:
+Live search accepts `query`, optional `recruitmentStatus`, `studyType`, `primaryPurpose`, `sources` (`ctgov`, `ctis` and/or `isrctn`), `limitPerSource`, and `searchMode`. Saved-record search also supports country and recruitment-status filters. For example:
 
 ```json
 {"query": "melanoma", "sources": ["ctgov", "ctis", "isrctn"], "limitPerSource": 2}
 ```
 
 These are arguments for `search_trials`, not a terminal command.
+
+To find **currently recruiting treatment trials**, use:
+
+```json
+{
+  "query": "melanoma",
+  "recruitmentStatus": "recruiting",
+  "studyType": "interventional",
+  "primaryPurpose": "treatment",
+  "limitPerSource": 2
+}
+```
+
+All filters are optional and combined with AND. `studyType` accepts `interventional`, `observational` or `expanded_access`. Interventional includes diagnostic and preventive research, so add `primaryPurpose: "treatment"` for treatment trials. Unknown classifications do not match a requested filter. Recruitment values are `recruiting`, `not_yet_recruiting`, `active_not_recruiting`, `by_invitation`, `completed`, `terminated`, `withdrawn`, `suspended` and `unknown`.
+
+ClinicalTrials.gov applies filters upstream. CTIS applies supported recruitment codes upstream, then checks explicit therapy scope in fetched details. ISRCTN filters a sample of up to 100 candidates (or the CLI import limit if larger), using its published WHO-format recruitment status and explicit treatment purpose/type. CTIS checks up to 40 candidates (or the CLI limit if larger). The server stops within its existing 120-second budget. Fewer results can mean that the scan bound was reached, not that no further matches exist. Responses disclose `scanned`, `filterCoverage`, `truncated` and `upstreamTotalScope`; upstream totals may be **before** local filters.
+
+Saved-record search accepts the same filters, using classifications stored at import time. Older records may lack study type or purpose; run a fresh live search to classify them. Registry classifications and recruitment statuses can be stale; follow the source link to check details. A planning or diagnostic-looking study may still be classified as treatment by its registry.
+
 
 For drugs, sponsors, trial IDs, or a broad search across other fields, explicitly choose `"searchMode": "keyword"`. Registry query expressions also belong in keyword mode. Condition mode uses a literal condition phrase on ClinicalTrials.gov; there is no automatic synonym expansion or switch to broad search when nothing matches. Each response includes the mode and the exact criteria sent to each registry.
 
@@ -87,13 +106,13 @@ For drugs, sponsors, trial IDs, or a broad search across other fields, explicitl
 - **These are limited search results.** The app does not download any registry in full.
 - **Saved search covers your local records only.** It may return different results from a new live search.
 - **The same trial can appear in multiple registries.** Records are not automatically merged, so counts are not counts of unique trials.
-- **CTIS “Authorised” does not mean recruiting.** CTIS recruitment status remains unknown in this prototype; the original country information is retained.
+- **CTIS “Authorised” does not mean recruiting.** Explicit CTIS public status codes identify recruitment; regulatory authorisation and recruitment-start flags alone do not. Recruiting means at least one country, not every listed site.
 - **A source failure is reported explicitly.** A failed live search does not quietly substitute older saved results.
 - **This app does not assess patient eligibility.** Review the registry record and trial criteria before drawing conclusions.
 
 Each record includes a link to its registry page, the retrieval time, and the source’s update date when available. Records are stored in `.data/trials.sqlite`. There is no background refresh.
 
-ISRCTN uses its documented public XML API. Condition mode sends `condition:"<query>"`; keyword mode sends the query unchanged. Source evidence is stored as parsed XML, with attribute names prefixed by `@_`. Recruitment status is mapped only from an explicit override; otherwise it remains unknown. ISRCTN reports an approximate match total, and the app fetches only the requested bounded sample.
+ISRCTN uses its documented public XML API. Condition mode sends `condition:"<query>"`; keyword mode sends the query unchanged. Source evidence is stored as parsed XML, with attribute names prefixed by `@_`. When a recruitment filter is requested, the server also retrieves the WHO-format export and matches records by ID to obtain the registry’s published status. Otherwise it uses explicit overrides when present. ISRCTN may derive its published status from dates; the server does not calculate it locally. ISRCTN reports an approximate match total, and the app fetches only the requested bounded sample.
 
 If you already connected this server, reconnect it or restart your AI application after updating and installing dependencies so it discovers the `isrctn` source. The server command and database path stay the same.
 
@@ -106,6 +125,9 @@ Run these commands from the project folder:
 ```sh
 # Fetch and save five records from each registry.
 node src/cli.mjs sync --query melanoma --limit 5
+
+# Fetch currently recruiting treatment trials.
+node src/cli.mjs sync --query melanoma --recruitmentStatus recruiting --studyType interventional --primaryPurpose treatment --limit 2
 
 # Opt into a broad keyword search instead of condition search.
 node src/cli.mjs sync --query pembrolizumab --searchMode keyword --limit 5

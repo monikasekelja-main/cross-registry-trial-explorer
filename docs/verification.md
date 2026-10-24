@@ -69,3 +69,18 @@ Complete or incremental registry ingestion, long-term CTIS endpoint stability, s
 - `node scripts/smoke-mcp-live.mjs` passed through an official MCP client and a real stdio server process. Default condition query `melanoma`, limit two per source, returned six registrations: two each from ClinicalTrials.gov, CTIS and ISRCTN. Source totals at execution: 3448, 180 and approximately 59 respectively; these are separate, overlapping source counts.
 - ISRCTN records: `ISRCTN62918594` and `ISRCTN16858627`; both explicitly include melanoma in their condition descriptions. Imported-record retrieval worked for every source. The local report is ignored under `.data/mcp-live-smoke-report.json`.
 - Existing SQLite databases need no schema migration. Reconnect the MCP client after updating to discover `isrctn`. No full mirror, scheduled refresh or cross-registry deduplication was added.
+
+
+## Recruitment, study type and treatment purpose — 24 October 2026
+
+The shared live tool, saved search, CLI and local HTTP search now accept `recruitmentStatus`, `studyType` and `primaryPurpose: treatment`. Normalizer version 3 records classifications and recruitment provenance; import history retains requested filters, scan counts and total-count scope.
+
+`node scripts/smoke-mcp-live.mjs --filtered` passed through the official MCP client and real stdio server. Query melanoma with recruiting + interventional + treatment and limit two returned six registrations:
+
+- ClinicalTrials.gov: NCT05629546, NCT07565285. Upstream total 278 includes requested filters.
+- CTIS: 2025-521562-95-00, 2024-519605-36-00. Sixteen candidates scanned; upstream 62 includes recruiting but precedes local therapy-scope filtering.
+- ISRCTN: ISRCTN20735014, ISRCTN14643179. Fifty-nine candidates scanned; approximate upstream 59 precedes local status, study-design and purpose filtering. Non-melanoma-only matches were excluded. ISRCTN classifies the preoperative planning study as Treatment; no title-based clinical reclassification is performed.
+
+The offline suite covers filter composition/validation, real MCP input schemas, filter provenance, exclusion of unknown/invitation/observational/diagnostic classifications, scan limits, WHO status joins, local facets and cursor invalidation. All 45 tests passed. Live records and report remain ignored under `.data/mcp-filtered-smoke-report.json`.
+
+Limits: CTIS scope 3 is a conservative treatment criterion. ISRCTN status is registry-published and may be date-derived. The scans are bounded, registry statuses can be stale, and recruiting at trial/country level does not guarantee a particular site is enrolling. No patient eligibility assessment or full registry mirror is implemented.

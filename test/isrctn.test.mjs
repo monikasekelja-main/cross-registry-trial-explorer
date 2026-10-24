@@ -32,7 +32,7 @@ test('ISRCTN condition and keyword queries use the documented bounded XML endpoi
   assert.deepEqual(buildSearchCriteria('isrctn', 'lung cancer'), { q: 'condition:"lung cancer"' });
 });
 test('ISRCTN handles zero, multiple, bounded and missing optional records', async () => {
-  assert.deepEqual(await adapter('<allTrials totalCount="0"/>').collect({}), { records: [], upstreamTotal: 0, truncated: false });
+  assert.deepEqual(await adapter('<allTrials totalCount="0"/>').collect({}), { records: [], upstreamTotal: 0, truncated: false, scanned: 0, filterCoverage: 'upstream', upstreamTotalScope: 'source query before local filters; approximate' });
   const one = isrctnXml().match(/<fullTrial>[\s\S]*<\/fullTrial>/)[0];
   const response = await adapter(`<allTrials totalCount="4">${one}${one.replaceAll('ISRCTN12345678', 'ISRCTN87654321')}</allTrials>`).collect({ limit: 2 });
   assert.equal(response.records.length, 2); assert.equal(response.truncated, true);

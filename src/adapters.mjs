@@ -1,19 +1,41 @@
 import { JsonClient, SourceError } from './http-client.mjs';
 
 export const SOURCES = ['ctgov', 'ctis', 'isrctn'];
-export const NORMALIZER_VERSION = '2';
-export function buildSearchCriteria(source, query = '', searchMode = 'condition') {
+export const NORMALIZER_VERSION = '3';
+export const RECRUITMENT_STATUSES = ['unknown','recruiting','not_yet_recruiting','active_not_recruiting','completed','terminated','withdrawn','suspended','by_invitation'];
+export const STUDY_TYPES = ['interventional', 'observational', 'expanded_access'];
+export function validateFilters({ recruitmentStatus, studyType, primaryPurpose } = {}) {
+  if (recruitmentStatus !== undefined && !RECRUITMENT_STATUSES.includes(recruitmentStatus)) throw new Error('Invalid recruitmentStatus');
+  if (studyType !== undefined && !STUDY_TYPES.includes(studyType)) throw new Error('Invalid studyType');
+  if (primaryPurpose !== undefined && primaryPurpose !== 'treatment') throw new Error('Invalid primaryPurpose; supported value is treatment');
+  if (primaryPurpose && studyType && studyType !== 'interventional') throw new Error('Treatment requires interventional studyType');
+}
+export function matchesFilters(trial, filters = {}) {
+  if (filters.primaryPurpose && trial.studyType !== 'interventional') return false;
+  return ['recruitmentStatus', 'studyType', 'primaryPurpose'].every(key => filters[key] === undefined || trial[key] === filters[key]);
+}
+const ctisRecruitment = { 2: 'not_yet_recruiting', 3: 'recruiting', 4: 'recruiting', 5: 'active_not_recruiting', 6: 'suspended', 7: 'suspended', 8: 'completed' };
+const ctisStatusFilters = { recruiting: [3,4], not_yet_recruiting: [2], active_not_recruiting: [5], suspended: [6,7], completed: [8] };
+
+export function buildSearchCriteria(source, query = '', searchMode = 'condition', filters = {}) {
+  validateFilters(filters);
   if (!SOURCES.includes(source)) throw new Error('Source must be ctgov, ctis or isrctn');
   if (!['condition', 'keyword'].includes(searchMode)) throw new Error('searchMode must be condition or keyword');
   if (typeof query !== 'string' || query.length > 500) throw new Error('query must be at most 500 characters');
   query = query.trim();
-  if (!query) return {};
+
   if (searchMode === 'condition' && query.includes('"')) {
     throw new Error('Condition search takes plain condition text without double quotes. Use searchMode="keyword" for registry query expressions.');
   }
-  if (source === 'ctgov') return { 'query.term': searchMode === 'condition' ? `AREA[Condition]"${query}"` : query };
-  if (source === 'isrctn') return { q: searchMode === 'condition' ? `condition:"${query}"` : query };
-  return { [searchMode === 'condition' ? 'medicalCondition' : 'containAny']: query };
+  if (source === 'ctgov') {
+    const terms = query ? [searchMode === 'condition' ? `AREA[Condition]"${query}"` : (filters.studyType || filters.primaryPurpose ? `(${query})` : query)] : [];
+    if (filters.studyType || filters.primaryPurpose) terms.push(`AREA[StudyType]${(filters.studyType ?? 'interventional').toUpperCase()}`);
+    if (filters.primaryPurpose) terms.push('AREA[DesignPrimaryPurpose]TREATMENT');
+    return { ...(terms.length ? { 'query.term': terms.join(' AND ') } : {}),
+      ...(filters.recruitmentStatus && filters.recruitmentStatus !== 'unknown' ? { 'filter.overallStatus': Object.entries(recruitment).find(([,v]) => v === filters.recruitmentStatus)?.[0] } : {}) };
+  }
+  if (source === 'isrctn') return query ? { q: searchMode === 'condition' ? `condition:"${query}"` : query } : {};
+  return { ...(query ? { [searchMode === 'condition' ? 'medicalCondition' : 'containAny']: query } : {}), ...(ctisStatusFilters[filters.recruitmentStatus] ? { status: ctisStatusFilters[filters.recruitmentStatus] } : {}) };
 }
 export const SOURCE_INFO = {
   isrctn: {
@@ -88,7 +110,10 @@ export function normalizeCtgov(raw, retrievedAt = new Date().toISOString()) {
     sponsor: text(p.sponsorCollaboratorsModule?.leadSponsor?.name),
     countries: [...new Set(sites.map(x => text(x?.country)).filter(Boolean))],
     phases: strings(p.designModule?.phases, 'phases'),
+    studyType: text(p.designModule?.studyType)?.toLowerCase() ?? 'unknown',
+    primaryPurpose: text(p.designModule?.designInfo?.primaryPurpose)?.toLowerCase() ?? 'unknown',
     recruitmentStatus: recruitment[statusRaw] ?? 'unknown',
+    recruitmentStatusBasis: 'ClinicalTrials.gov overallStatus',
     regulatoryStatus: null, statusRaw,
     countryStatuses: [],
     hasResults: typeof raw.hasResults === 'boolean' ? raw.hasResults : null,
@@ -114,7 +139,7 @@ export function normalizeCtis(detail, summary = {}, retrievedAt = new Date().toI
     hasRecruitmentStarted: typeof x?.mscInfo?.hasRecruitmentStarted === 'boolean' ? x.mscInfo.hasRecruitmentStarted : null,
   }));
   const countries = countryStatuses.map(x => x.country).filter(Boolean);
-  // Portal country suffixes are regulatory codes, never recruitment statuses.
+  // Strip portal status suffixes for country names; recruitment uses the explicit public status code.
   const summaryCountries = strings(summary.trialCountries, 'trialCountries').map(x => x.replace(/:\d+$/, ''));
   const detailedConditions = array(part.medicalConditions, 'medicalConditions').map(x => text(x?.medicalCondition)).filter(Boolean);
   const resultRaw = text(summary.resultsFirstReceived);
@@ -127,7 +152,11 @@ export function normalizeCtis(detail, summary = {}, retrievedAt = new Date().toI
     countries: [...new Set([...countries, ...summaryCountries])],
     // Preserve CTIS's own phase language; no inferred numeric code mappings.
     phases: [text(summary.trialPhase)].filter(Boolean),
-    recruitmentStatus: 'unknown', regulatoryStatus: text(detail.ctStatus),
+    studyType: 'interventional',
+    primaryPurpose: array(part.trialDetails?.trialInformation?.trialObjective?.trialScopes, 'trialScopes').some(x => x?.code === '3') ? 'treatment' : 'unknown',
+    recruitmentStatus: ctisRecruitment[detail.ctPublicStatusCode] ?? 'unknown',
+    recruitmentStatusBasis: 'CTIS ctPublicStatusCode; recruiting means at least one country, not every site',
+    regulatoryStatus: text(detail.ctStatus),
     statusRaw: text(detail.ctStatus), countryStatuses,
     hasResults: resultRaw === 'Yes' ? true : resultRaw === 'No' ? false : null,
     sourceUpdatedAt: isoDay(summary.lastUpdated),
@@ -149,7 +178,7 @@ export function normalizeIsrctn(raw, retrievedAt = new Date().toISOString()) {
   const trial = object(raw.trial, 'ISRCTN trial');
   const sourceId = validateId('isrctn', requiredText(trial['@_publicIdentifierCanonical'], 'ISRCTN ID'));
   const interventions = xmlList(trial.interventions?.intervention);
-  const statusRaw = xmlText(trial.participants?.recruitmentStatusOverride);
+  const statusRaw = xmlText(raw.who?.main?.recruitment_status) ?? xmlText(trial.participants?.recruitmentStatusOverride);
   const identifiers = [{ registry: 'isrctn', value: sourceId }];
   for (const entry of xmlList(trial.externalRefs?.secondaryNumbers?.secondaryNumber)) {
     const value = xmlText(entry);
@@ -165,9 +194,12 @@ export function normalizeIsrctn(raw, retrievedAt = new Date().toISOString()) {
     sponsor: xmlList(raw.sponsor).map(x => xmlText(x.organisation)).filter(Boolean).join('; ') || null,
     countries: xmlList(trial.participants?.recruitmentCountries?.country).map(xmlText).filter(Boolean),
     phases: [...new Set(interventions.map(x => xmlText(x.phase)).filter(Boolean))],
-    // Do not derive recruitment from dates or overall study completion.
+    studyType: xmlText(trial.trialDesign?.primaryStudyDesign)?.toLowerCase() ?? 'unknown',
+    primaryPurpose: [...xmlList(trial.trialDesign?.interventionalTrialDesign?.purposes?.purpose), ...xmlList(trial.trialDesign?.trialTypes?.trialType)].some(x => xmlText(x)?.toLowerCase() === 'treatment') ? 'treatment' : 'unknown',
+    recruitmentStatusBasis: raw.who ? 'ISRCTN WHO export recruitment_status (registry may derive it from dates)' : 'ISRCTN explicit override; otherwise unknown',
+    // Use the registry's published status rather than computing it from dates locally.
     recruitmentStatus: ({ Recruiting: 'recruiting', 'Not yet recruiting': 'not_yet_recruiting',
-      'No longer recruiting': 'active_not_recruiting', 'Enrolling by invitation': 'by_invitation' })[statusRaw] ?? 'unknown',
+      'No longer recruiting': 'active_not_recruiting', 'No longer recruited': 'active_not_recruiting', Stopped: 'terminated', Suspended: 'suspended', Completed: 'completed', 'Enrolling by invitation': 'by_invitation' })[statusRaw] ?? 'unknown',
     statusRaw, regulatoryStatus: null, countryStatuses: [],
     hasResults: xmlList(trial.outputs?.output).some(x => ['basicresults', 'plainenglishresults', 'results'].includes(x['@_outputType'])) ? true : null,
     sourceUpdatedAt: text(trial['@_lastUpdated']), retrievedAt,
@@ -181,29 +213,49 @@ export function createAdapters({ clients = {} } = {}) {
   const ctis = clients.ctis ?? new JsonClient();
   return {
     isrctn: {
-      async collect({ query = '', searchMode = 'condition', limit = 10, signal }) {
+      async collect({ query = '', searchMode = 'condition', limit = 10, signal, ...filters }) {
         const url = new URL('https://www.isrctn.com/api/query/format/default');
-        for (const [key, value] of Object.entries(buildSearchCriteria('isrctn', query, searchMode))) url.searchParams.set(key, value);
-        url.searchParams.set('limit', String(limit));
+        for (const [key, value] of Object.entries(buildSearchCriteria('isrctn', query, searchMode, filters))) url.searchParams.set(key, value);
+        const filtered = Object.values(filters).some(x => x !== undefined);
+        const scanLimit = filtered ? Math.max(limit, 100) : limit;
+        url.searchParams.set('limit', String(scanLimit));
         const page = object((await isrctn.xml(url, { signal })).allTrials, 'ISRCTN allTrials');
         const count = page['@_totalCount'];
         if (typeof count !== 'string' || !/^\d+$/.test(count) || !Number.isSafeInteger(Number(count))) throw new SourceError('Invalid ISRCTN totalCount');
         const rows = xmlList(page.fullTrial);
-        const records = rows.slice(0, limit).map(raw => ({ trial: normalizeIsrctn(raw), raw }));
+        let statuses = new Map();
+        if (filters.recruitmentStatus && rows.length) {
+          const whoUrl = new URL(url); whoUrl.pathname = '/api/query/format/who';
+          const whoPage = await isrctn.xml(whoUrl, { signal });
+          if (!Object.hasOwn(whoPage, 'trials')) throw new SourceError('Missing ISRCTN WHO trials');
+          statuses = new Map(xmlList(whoPage.trials?.trial).map(row => [xmlText(row.main?.trial_id), row]));
+          if (rows.some(row => !statuses.has(row.trial?.['@_publicIdentifierCanonical']))) throw new SourceError('ISRCTN default/WHO export mismatch; retry search');
+        }
+        const scanned = rows.map(row => {
+          const who = statuses.get(row.trial?.['@_publicIdentifierCanonical']);
+          const raw = who ? { ...row, who } : row;
+          return { trial: normalizeIsrctn(raw), raw };
+        });
+        // ISRCTN also matches melanoma within 'non-melanoma'; that alone is not a melanoma condition.
+        const matching = scanned.filter(({ trial }) => matchesFilters(trial, filters) &&
+          !(searchMode === 'condition' && query.trim().toLowerCase() === 'melanoma' &&
+            !trial.conditions.some(condition => /\bmelanoma\b/i.test(condition.replace(/\bnon[-\s]+melanoma\b/gi, '')))));
+        const records = matching.slice(0, limit);
         if (new Set(records.map(x => x.trial.sourceId)).size !== records.length) throw new SourceError('ISRCTN returned duplicate identifiers');
         const upstreamTotal = Number(count);
         if (upstreamTotal < rows.length || (upstreamTotal > 0 && !rows.length)) throw new SourceError('Inconsistent ISRCTN result count');
-        return { records, upstreamTotal, truncated: upstreamTotal > records.length };
+        return { records, upstreamTotal, truncated: upstreamTotal > rows.length || matching.length > records.length, scanned: rows.length, filterCoverage: filtered ? 'bounded_scan' : 'upstream', upstreamTotalScope: 'source query before local filters; approximate' };
       },
     },
     ctgov: {
-      async collect({ query = '', searchMode = 'condition', limit = 10, signal }) {
-        const searchCriteria = buildSearchCriteria('ctgov', query, searchMode);
-        const records = []; const seen = new Set(); const tokens = new Set(); let token; let upstreamTotal = null;
+      async collect({ query = '', searchMode = 'condition', limit = 10, signal, ...filters }) {
+        const searchCriteria = buildSearchCriteria('ctgov', query, searchMode, filters);
+        const records = []; const seen = new Set(); const tokens = new Set(); let token; let upstreamTotal = null; let scanned = 0;
+        const scanLimit = filters.recruitmentStatus === 'unknown' ? Math.max(limit, 100) : limit;
         do {
           const url = new URL('https://clinicaltrials.gov/api/v2/studies');
           url.searchParams.set('format', 'json'); url.searchParams.set('countTotal', 'true');
-          url.searchParams.set('pageSize', String(Math.min(100, limit - records.length)));
+          url.searchParams.set('pageSize', String(Math.min(100, scanLimit - scanned)));
           url.searchParams.set('sort', 'LastUpdatePostDate:desc');
           for (const [key, value] of Object.entries(searchCriteria)) url.searchParams.set(key, value);
           if (token) url.searchParams.set('pageToken', token);
@@ -215,7 +267,10 @@ export function createAdapters({ clients = {} } = {}) {
           }
           for (const raw of page.studies) {
             const trial = normalizeCtgov(raw);
-            if (!seen.has(trial.sourceId)) { seen.add(trial.sourceId); records.push({ trial, raw }); }
+            if (!seen.has(trial.sourceId)) {
+              seen.add(trial.sourceId); scanned++;
+              if (matchesFilters(trial, filters)) records.push({ trial, raw });
+            }
           }
           if (page.nextPageToken != null && typeof page.nextPageToken !== 'string') throw new SourceError('Invalid nextPageToken');
           const next = page.nextPageToken;
@@ -223,18 +278,19 @@ export function createAdapters({ clients = {} } = {}) {
           if (next) tokens.add(next);
           if (next && page.studies.length === 0) throw new SourceError('ClinicalTrials.gov returned an empty continuation page');
           token = next;
-          if (records.length >= limit || !token) return { records: records.slice(0, limit), upstreamTotal, truncated: Boolean(token) || records.length > limit };
+          if (records.length >= limit || scanned >= scanLimit || !token) return { records: records.slice(0, limit), upstreamTotal, truncated: Boolean(token) || records.length > limit, scanned, filterCoverage: filters.recruitmentStatus === 'unknown' ? 'bounded_scan' : 'upstream', upstreamTotalScope: filters.recruitmentStatus === 'unknown' ? 'before local unknown-status filter' : 'includes requested source filters' };
         } while (true);
       },
     },
     ctis: {
-      async collect({ query = '', searchMode = 'condition', limit = 10, signal }) {
-        const searchCriteria = buildSearchCriteria('ctis', query, searchMode);
-        const records = []; const seen = new Set(); let pageNumber = 1;
+      async collect({ query = '', searchMode = 'condition', limit = 10, signal, ...filters }) {
+        const searchCriteria = buildSearchCriteria('ctis', query, searchMode, filters);
+        const records = []; const seen = new Set(); let pageNumber = 1; let scanned = 0;
+        const scanLimit = Object.values(filters).some(x => x !== undefined) ? Math.max(limit, 40) : limit;
         do {
           const page = object(await ctis.json('https://euclinicaltrials.eu/ctis-public-api/search', {
             signal, method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ pagination: { page: pageNumber, size: Math.min(100, limit) },
+            body: JSON.stringify({ pagination: { page: pageNumber, size: Math.min(100, scanLimit) },
               sort: { property: 'decisionDate', direction: 'DESC' }, searchCriteria }),
           }), 'CTIS search page');
           if (!Array.isArray(page.data)) throw new SourceError('CTIS search page is missing data');
@@ -249,13 +305,14 @@ export function createAdapters({ clients = {} } = {}) {
             const detail = object(await ctis.json(`https://euclinicaltrials.eu/ctis-public-api/retrieve/${id}`, { signal }), 'CTIS detail');
             if (!detail.ctNumber) throw new SourceError('CTIS returned an empty or missing trial detail');
             const trial = normalizeCtis(detail, summary);
-            seen.add(id); added++; records.push({ trial, raw: { detail, summary } });
-            if (records.length >= limit) break;
+            seen.add(id); added++; scanned++;
+            if (matchesFilters(trial, filters)) records.push({ trial, raw: { detail, summary } });
+            if (records.length >= limit || scanned >= scanLimit) break;
           }
           if (pagination.nextPage && !added) throw new SourceError('CTIS pagination made no progress');
-          if (records.length >= limit || !pagination.nextPage) return {
+          if (records.length >= limit || scanned >= scanLimit || !pagination.nextPage) return {
             records, upstreamTotal: pagination.totalRecords ?? null,
-            truncated: pagination.nextPage || page.data.length > added,
+            truncated: pagination.nextPage || page.data.length > added, scanned, filterCoverage: 'bounded_scan', upstreamTotalScope: 'source query before local study-type/purpose and unsupported status filters',
           };
           pageNumber++;
         } while (true);
