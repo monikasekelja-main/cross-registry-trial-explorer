@@ -187,7 +187,7 @@ test('source import rollback leaves records, search index and revision intact', 
 });
 test('one failed source retains old data while the other source succeeds', async t => {
   const store = storeFor(t); importOne(store, 'ctis');
-  const result = await sync(store, { adapters: {
+  const result = await sync(store, { sources: ['ctgov', 'ctis'], adapters: {
     ctgov: { collect: async () => collection() }, ctis: { collect: async () => { throw new SourceError('Registry returned HTTP 503'); } },
   } });
   assert.equal(result.status, 'partial_failure'); assert.equal(store.search().totalCount, 2);

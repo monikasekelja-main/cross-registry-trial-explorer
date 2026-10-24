@@ -55,7 +55,7 @@ for (const mode of ['legacy', 'auto']) {
     const record = output(await client.callTool({ name: 'get_trial', arguments: { source: 'ctis', id: '2026-500001-01-00', includeRaw: true } }));
     assert.ok(record.raw.detail); assert.equal(record.regulatoryStatus, 'Authorised');
     const status = output(await client.callTool({ name: 'get_source_status', arguments: {} }));
-    assert.equal(status.sources.length, 2);
+    assert.equal(status.sources.length, 3);
     for (const args of [
       { name: 'get_trial', arguments: { source: 'ctgov', id: 'NCT99999999' } },
       { name: 'get_trial', arguments: { source: 'ctgov', id: '../../etc/passwd' } },
@@ -83,7 +83,7 @@ test('live MCP search returns this call only, caches records and preserves parti
     ctis: { collect: async () => { if (failCtis) throw new Error('CTIS unavailable'); return collection('ctis'); } },
   });
   store.commitSource('ctgov', collection('ctgov'), {}, time);
-  const live = output(await client.callTool({ name: 'search_trials', arguments: { query: 'melanoma', limitPerSource: 1 } }));
+  const live = output(await client.callTool({ name: 'search_trials', arguments: { query: 'melanoma', sources: ['ctgov', 'ctis'], limitPerSource: 1 } }));
   assert.equal(live.status, 'ok'); assert.equal(live.returned, 2);
   assert.equal(live.searchMode, 'condition');
   assert.deepEqual(live.sources[0].searchCriteria, { 'query.term': 'AREA[Condition]"melanoma"' });
@@ -92,7 +92,7 @@ test('live MCP search returns this call only, caches records and preserves parti
   assert.equal(live.sources[0].records[0].sourceId, 'NCT00000002');
   assert.equal(store.search().totalCount, 3);
   failCtis = true;
-  const partial = output(await client.callTool({ name: 'search_trials', arguments: { query: 'melanoma', limitPerSource: 1 } }));
+  const partial = output(await client.callTool({ name: 'search_trials', arguments: { query: 'melanoma', sources: ['ctgov', 'ctis'], limitPerSource: 1 } }));
   assert.equal(partial.status, 'partial_failure'); assert.equal(partial.returned, 1);
   assert.equal(partial.sources[1].status, 'failed'); assert.equal(partial.sources[1].records, undefined);
   assert.equal(store.search({ source: 'ctis' }).totalCount, 1); assert.equal(calls, 2);
@@ -114,7 +114,7 @@ test('MCP keyword opt-in reaches the adapter and is recorded in result provenanc
 test('all upstream failures become an explicit MCP tool error', async t => {
   const fail = { collect: async () => { throw new Error('Registry unavailable'); } };
   const { client } = await inMemory(t, { ctgov: fail, ctis: fail });
-  const result = await client.callTool({ name: 'search_trials', arguments: { query: 'melanoma' } });
+  const result = await client.callTool({ name: 'search_trials', arguments: { query: 'melanoma', sources: ['ctgov', 'ctis'] } });
   assert.equal(result.isError, true); assert.equal(result.structuredContent.returned, 0);
   assert.equal(result.structuredContent.sources.length, 2);
 });
@@ -142,4 +142,32 @@ test('MCP local pagination reports invalidated cursors as recoverable tool error
   store.commitSource('ctgov', collection('ctgov'), {}, time);
   const stale = await client.callTool({ name: 'search_imported_trials', arguments: { limit: 1, cursor: first.nextCursor } });
   assert.equal(stale.isError, true); assert.equal(stale.structuredContent.reason, 'index_changed');
+});
+
+test('default MCP search includes ISRCTN, caches parsed XML and isolates its failure', async t => {
+  const { XMLParser } = await import('fast-xml-parser');
+  const { normalizeIsrctn } = await import('../src/adapters.mjs');
+  const { isrctnXml } = await import('./fixtures.mjs');
+  const raw = new XMLParser({ ignoreAttributes: false, parseTagValue: false }).parse(isrctnXml()).allTrials.fullTrial;
+  let fail = false;
+  const { client } = await inMemory(t, {
+    ctgov: { collect: async () => collection('ctgov') }, ctis: { collect: async () => collection('ctis') },
+    isrctn: { collect: async ({ query, searchMode }) => {
+      assert.equal(query, 'melanoma'); assert.equal(searchMode, 'condition');
+      if (fail) throw new Error('ISRCTN unavailable');
+      return { records: [{ raw, trial: normalizeIsrctn(raw) }], upstreamTotal: 1, truncated: false };
+    } },
+  });
+  const args = { name: 'search_trials', arguments: { query: 'melanoma', limitPerSource: 1 } };
+  const live = output(await client.callTool(args));
+  assert.deepEqual(live.sources.map(x => x.source), ['ctgov', 'ctis', 'isrctn']); assert.equal(live.returned, 3);
+  assert.deepEqual(live.sources[2].searchCriteria, { q: 'condition:"melanoma"' });
+  const saved = output(await client.callTool({ name: 'get_trial', arguments: { source: 'isrctn', id: 'ISRCTN12345678', includeRaw: true } }));
+  assert.equal(saved.raw.trial['@_publicIdentifierCanonical'], 'ISRCTN12345678');
+  const cached = output(await client.callTool({ name: 'search_imported_trials', arguments: { source: 'isrctn', q: 'melanoma' } }));
+  assert.equal(cached.totalCount, 1);
+  fail = true;
+  const partial = output(await client.callTool(args));
+  assert.equal(partial.status, 'partial_failure'); assert.equal(partial.returned, 2);
+  assert.equal(partial.sources[2].records, undefined);
 });

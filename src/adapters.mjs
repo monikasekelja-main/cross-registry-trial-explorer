@@ -1,9 +1,9 @@
 import { JsonClient, SourceError } from './http-client.mjs';
 
-export const SOURCES = ['ctgov', 'ctis'];
+export const SOURCES = ['ctgov', 'ctis', 'isrctn'];
 export const NORMALIZER_VERSION = '2';
 export function buildSearchCriteria(source, query = '', searchMode = 'condition') {
-  if (!SOURCES.includes(source)) throw new Error('Source must be ctgov or ctis');
+  if (!SOURCES.includes(source)) throw new Error('Source must be ctgov, ctis or isrctn');
   if (!['condition', 'keyword'].includes(searchMode)) throw new Error('searchMode must be condition or keyword');
   if (typeof query !== 'string' || query.length > 500) throw new Error('query must be at most 500 characters');
   query = query.trim();
@@ -12,9 +12,15 @@ export function buildSearchCriteria(source, query = '', searchMode = 'condition'
     throw new Error('Condition search takes plain condition text without double quotes. Use searchMode="keyword" for registry query expressions.');
   }
   if (source === 'ctgov') return { 'query.term': searchMode === 'condition' ? `AREA[Condition]"${query}"` : query };
+  if (source === 'isrctn') return { q: searchMode === 'condition' ? `condition:"${query}"` : query };
   return { [searchMode === 'condition' ? 'medicalCondition' : 'containAny']: query };
 }
 export const SOURCE_INFO = {
+  isrctn: {
+    name: 'ISRCTN', access: 'Documented public XML API (draft v0.6)',
+    documentation: 'https://www.isrctn.com/page/help',
+    terms: 'https://www.isrctn.com/page/terms',
+  },
   ctgov: {
     name: 'ClinicalTrials.gov', access: 'Documented public API v2',
     documentation: 'https://clinicaltrials.gov/data-api/about-api',
@@ -61,8 +67,8 @@ const recruitment = {
   ENROLLING_BY_INVITATION: 'by_invitation',
 };
 export function validateId(source, id) {
-  if (!SOURCES.includes(source)) throw new Error('Source must be ctgov or ctis');
-  if (!(source === 'ctgov' ? /^NCT\d{8}$/ : /^\d{4}-\d{6}-\d{2}-\d{2}$/).test(id)) {
+  if (!SOURCES.includes(source)) throw new Error('Source must be ctgov, ctis or isrctn');
+  if (!(source === 'ctgov' ? /^NCT\d{8}$/ : source === 'isrctn' ? /^ISRCTN\d{8}$/ : /^\d{4}-\d{6}-\d{2}-\d{2}$/).test(id)) {
     throw new Error(`Invalid ${source} identifier`);
   }
   return id;
@@ -134,10 +140,62 @@ export function normalizeCtis(detail, summary = {}, retrievedAt = new Date().toI
   };
 }
 
+// XML collections may contain a single object, multiple objects, or an empty element.
+function xmlList(value) { return value === undefined || value === '' ? [] : Array.isArray(value) ? value : [value]; }
+function xmlText(value) { return text(typeof value === 'object' && value ? value['#text'] : value); }
+
+export function normalizeIsrctn(raw, retrievedAt = new Date().toISOString()) {
+  object(raw, 'ISRCTN fullTrial');
+  const trial = object(raw.trial, 'ISRCTN trial');
+  const sourceId = validateId('isrctn', requiredText(trial['@_publicIdentifierCanonical'], 'ISRCTN ID'));
+  const interventions = xmlList(trial.interventions?.intervention);
+  const statusRaw = xmlText(trial.participants?.recruitmentStatusOverride);
+  const identifiers = [{ registry: 'isrctn', value: sourceId }];
+  for (const entry of xmlList(trial.externalRefs?.secondaryNumbers?.secondaryNumber)) {
+    const value = xmlText(entry);
+    if (value) identifiers.push({ registry: /^NCT\d{8}$/.test(value) ? 'ctgov' : /^\d{4}-\d{6}-\d{2}-\d{2}$/.test(value) ? 'ctis' : 'unspecified', value });
+  }
+  const nct = xmlText(trial.externalRefs?.clinicalTrialsGovNumber);
+  if (/^NCT\d{8}$/.test(nct ?? '') && !identifiers.some(x => x.value === nct)) identifiers.push({ registry: 'ctgov', value: nct });
+  return {
+    source: 'isrctn', sourceId,
+    title: requiredText(xmlText(trial.trialDescription?.title), 'ISRCTN title'),
+    conditions: xmlList(trial.conditions?.condition).map(x => xmlText(x.description)).filter(Boolean),
+    interventions: interventions.map(x => xmlText(x.drugNames) ?? xmlText(x.description)).filter(Boolean),
+    sponsor: xmlList(raw.sponsor).map(x => xmlText(x.organisation)).filter(Boolean).join('; ') || null,
+    countries: xmlList(trial.participants?.recruitmentCountries?.country).map(xmlText).filter(Boolean),
+    phases: [...new Set(interventions.map(x => xmlText(x.phase)).filter(Boolean))],
+    // Do not derive recruitment from dates or overall study completion.
+    recruitmentStatus: ({ Recruiting: 'recruiting', 'Not yet recruiting': 'not_yet_recruiting',
+      'No longer recruiting': 'active_not_recruiting', 'Enrolling by invitation': 'by_invitation' })[statusRaw] ?? 'unknown',
+    statusRaw, regulatoryStatus: null, countryStatuses: [],
+    hasResults: xmlList(trial.outputs?.output).some(x => ['basicresults', 'plainenglishresults', 'results'].includes(x['@_outputType'])) ? true : null,
+    sourceUpdatedAt: text(trial['@_lastUpdated']), retrievedAt,
+    sourceUrl: `https://www.isrctn.com/${sourceId}`, identifiers, normalizerVersion: NORMALIZER_VERSION,
+  };
+}
+
 export function createAdapters({ clients = {} } = {}) {
+  const isrctn = clients.isrctn ?? new JsonClient();
   const ctgov = clients.ctgov ?? new JsonClient();
   const ctis = clients.ctis ?? new JsonClient();
   return {
+    isrctn: {
+      async collect({ query = '', searchMode = 'condition', limit = 10, signal }) {
+        const url = new URL('https://www.isrctn.com/api/query/format/default');
+        for (const [key, value] of Object.entries(buildSearchCriteria('isrctn', query, searchMode))) url.searchParams.set(key, value);
+        url.searchParams.set('limit', String(limit));
+        const page = object((await isrctn.xml(url, { signal })).allTrials, 'ISRCTN allTrials');
+        const count = page['@_totalCount'];
+        if (typeof count !== 'string' || !/^\d+$/.test(count) || !Number.isSafeInteger(Number(count))) throw new SourceError('Invalid ISRCTN totalCount');
+        const rows = xmlList(page.fullTrial);
+        const records = rows.slice(0, limit).map(raw => ({ trial: normalizeIsrctn(raw), raw }));
+        if (new Set(records.map(x => x.trial.sourceId)).size !== records.length) throw new SourceError('ISRCTN returned duplicate identifiers');
+        const upstreamTotal = Number(count);
+        if (upstreamTotal < rows.length || (upstreamTotal > 0 && !rows.length)) throw new SourceError('Inconsistent ISRCTN result count');
+        return { records, upstreamTotal, truncated: upstreamTotal > records.length };
+      },
+    },
     ctgov: {
       async collect({ query = '', searchMode = 'condition', limit = 10, signal }) {
         const searchCriteria = buildSearchCriteria('ctgov', query, searchMode);

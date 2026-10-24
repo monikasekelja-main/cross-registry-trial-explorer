@@ -21,3 +21,13 @@ export function ctisSummary(id = '2026-500001-01-00') {
   return { ctNumber: id, ctTitle: 'Melanoma CTIS example', trialCountries: ['Italy:2'],
     conditions: 'Melanoma', lastUpdated: '21/10/2026', resultsFirstReceived: 'No' };
 }
+
+export const isrctnXml = (id = 'ISRCTN12345678') => `<allTrials xmlns="http://www.67bricks.com/isrctn" totalCount="1"><fullTrial>
+<trial publicIdentifierCanonical="${id}" lastUpdated="2026-10-24T12:00:00Z">
+<trialDescription><title>Melanoma &amp; treatment</title></trialDescription>
+<conditions><condition><description>Melanoma</description></condition></conditions>
+<participants><recruitmentCountries><country>United Kingdom</country></recruitmentCountries><recruitmentStatusOverride>Recruiting</recruitmentStatusOverride></participants>
+<interventions><intervention><drugNames>Example</drugNames><phase>Phase II</phase></intervention></interventions>
+<externalRefs><secondaryNumbers><secondaryNumber numberType="nct">NCT00000001</secondaryNumber></secondaryNumbers></externalRefs>
+<outputs><output outputType="basicresults"/></outputs>
+</trial><sponsor><organisation>Example sponsor</organisation></sponsor></fullTrial></allTrials>`;

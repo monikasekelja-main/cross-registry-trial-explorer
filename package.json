@@ -2,7 +2,7 @@
   "name": "cross-registry-trial-explorer",
   "author": "monikasekelja-main (https://github.com/monikasekelja-main)",
   "license": "MIT",
-  "description": "Search ClinicalTrials.gov and EU CTIS through one MCP server, with versioned source records and local search.",
+  "description": "Search ClinicalTrials.gov, EU CTIS and ISRCTN through one MCP server, with versioned source records and local search.",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -22,6 +22,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/server": "2.3.1",
+    "fast-xml-parser": "5.11.2",
     "zod": "4.6.5"
   },
   "devDependencies": {

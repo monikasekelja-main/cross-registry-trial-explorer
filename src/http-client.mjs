@@ -1,4 +1,5 @@
 import { setTimeout as sleep } from 'node:timers/promises';
+import { XMLParser, XMLValidator } from 'fast-xml-parser';
 
 export class SourceError extends Error {
   constructor(message, { status, retryable = false } = {}) {
@@ -45,7 +46,10 @@ export class JsonClient {
     await abortable(slot, signal);
   }
 
-  async json(url, { signal, ...options } = {}) {
+  async json(url, options = {}) { return this.request(url, options, 'json'); }
+  async xml(url, options = {}) { return this.request(url, options, 'xml'); }
+
+  async request(url, { signal, ...options } = {}, format) {
     for (let attempt = 0; attempt < this.attempts; attempt++) {
       signal?.throwIfAborted();
       await this.slot(signal);
@@ -55,7 +59,7 @@ export class JsonClient {
         const requestSignal = signal ? AbortSignal.any([signal, timeout]) : timeout;
         const response = await this.fetchImpl(url, {
           ...options, signal: requestSignal,
-          headers: { Accept: 'application/json', ...options.headers },
+          headers: { Accept: format === 'xml' ? 'application/xml, text/xml' : 'application/json', ...options.headers },
           redirect: 'error',
         });
         if (!response.ok) {
@@ -65,9 +69,9 @@ export class JsonClient {
             status: response.status, retryable: [429, 500, 502, 503, 504].includes(response.status),
           });
         }
-        if (!response.headers.get('content-type')?.toLowerCase().includes('json')) {
+        if (!response.headers.get('content-type')?.toLowerCase().includes(format)) {
           await response.body?.cancel();
-          throw new SourceError('Registry returned non-JSON content; refusing to import it');
+          throw new SourceError(`Registry returned non-${format.toUpperCase()} content; refusing to import it`);
         }
         let size = 0;
         const chunks = [];
@@ -76,7 +80,12 @@ export class JsonClient {
           if (size > this.maxBytes) throw new SourceError('Registry response exceeded size limit');
           chunks.push(Buffer.from(chunk));
         }
-        try { return JSON.parse(Buffer.concat(chunks).toString('utf8')); }
+        const body = Buffer.concat(chunks).toString('utf8');
+        if (format === 'xml') {
+          if (/<!DOCTYPE|<!ENTITY/i.test(body) || XMLValidator.validate(body) !== true) throw new SourceError('Registry returned malformed or unsafe XML');
+          return new XMLParser({ ignoreAttributes: false, parseTagValue: false, parseAttributeValue: false }).parse(body);
+        }
+        try { return JSON.parse(body); }
         catch { throw new SourceError('Registry returned malformed JSON'); }
       } catch (error) {
         signal?.throwIfAborted();

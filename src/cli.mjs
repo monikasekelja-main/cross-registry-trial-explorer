@@ -5,7 +5,7 @@ import { createApi } from './server.mjs';
 import { validateId } from './adapters.mjs';
 
 const usage = `Usage (Node.js 24+):
-  node src/cli.mjs sync [--source all|ctgov|ctis] [--query melanoma] [--searchMode condition|keyword] [--limit 5] [--db PATH]
+  node src/cli.mjs sync [--source all|ctgov|ctis|isrctn] [--query melanoma] [--searchMode condition|keyword] [--limit 5] [--db PATH]
   node src/cli.mjs search [--q melanoma] [--country Italy] [--source ctis] [--limit 20] [--cursor TOKEN] [--db PATH]
   node src/cli.mjs get SOURCE ID [--db PATH]
   node src/cli.mjs status [--db PATH]

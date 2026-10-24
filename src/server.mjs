@@ -20,7 +20,7 @@ export function createApi(store) {
         }
         return send(200, store.search(Object.fromEntries(url.searchParams)));
       }
-      const match = /^\/trials\/(ctgov|ctis)\/([^/]+)(\/history)?$/.exec(url.pathname);
+      const match = /^\/trials\/(ctgov|ctis|isrctn)\/([^/]+)(\/history)?$/.exec(url.pathname);
       if (match) {
         const [, source, id, history] = match;
         try { validateId(source, id); } catch { throw new QueryError('Invalid trial identifier'); }

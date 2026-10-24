@@ -16,12 +16,12 @@ try {
   const live = await client.callTool({ name: 'search_trials', arguments: { query: 'melanoma', limitPerSource: 2 } }, { timeout: 150000 });
   assert.notEqual(live.isError, true, JSON.stringify(live.content));
   assert.equal(live.structuredContent.status, 'ok');
-  assert.equal(live.structuredContent.sources.length, 2);
+  assert.equal(live.structuredContent.sources.length, 3);
   assert.equal(live.structuredContent.searchMode, 'condition');
   for (const source of live.structuredContent.sources) {
     assert.equal(source.status, 'ok'); assert.equal(source.records.length, 2);
     assert.deepEqual(source.searchCriteria, source.source === 'ctgov'
-      ? { 'query.term': 'AREA[Condition]"melanoma"' } : { medicalCondition: 'melanoma' });
+      ? { 'query.term': 'AREA[Condition]"melanoma"' } : source.source === 'ctis' ? { medicalCondition: 'melanoma' } : { q: 'condition:"melanoma"' });
     for (const record of source.records) assert.ok(record.conditions.some(condition => /melanoma/i.test(condition)), `Unexpected condition for ${record.sourceId}`);
     const first = source.records[0];
     const detail = await client.callTool({ name: 'get_trial', arguments: { source: first.source, id: first.sourceId } });

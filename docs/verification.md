@@ -61,3 +61,11 @@ Local evidence is saved in `.data/mcp-live-smoke-report.json`, with the imported
 ## Not established
 
 Complete or incremental registry ingestion, long-term CTIS endpoint stability, source-wide removal detection, multilingual recall, medical synonym matching, deduplication quality, patient matching, individual desktop-host configuration, hosted Streamable HTTP MCP, distributed rate limiting, production load, and production redistribution permissions were not validated.
+
+
+## ISRCTN integration — 24 October 2026
+
+- All 35 offline automated tests passed with Node.js 24+, including real stdio handshakes, default three-source discovery/search, ISRCTN normalization and local retrieval, partial failures, XML validation, unsafe declarations, malformed/count failures and HTTP routes.
+- `node scripts/smoke-mcp-live.mjs` passed through an official MCP client and a real stdio server process. Default condition query `melanoma`, limit two per source, returned six registrations: two each from ClinicalTrials.gov, CTIS and ISRCTN. Source totals at execution: 3448, 180 and approximately 59 respectively; these are separate, overlapping source counts.
+- ISRCTN records: `ISRCTN62918594` and `ISRCTN16858627`; both explicitly include melanoma in their condition descriptions. Imported-record retrieval worked for every source. The local report is ignored under `.data/mcp-live-smoke-report.json`.
+- Existing SQLite databases need no schema migration. Reconnect the MCP client after updating to discover `isrctn`. No full mirror, scheduled refresh or cross-registry deduplication was added.

@@ -1,7 +1,7 @@
 import { SOURCES, createAdapters, buildSearchCriteria } from './adapters.mjs';
 
 export async function sync(store, { sources = SOURCES, query = '', searchMode = 'condition', limit = 10, signal, adapters = createAdapters(), includeRecords = false } = {}) {
-  if (!Array.isArray(sources) || !sources.length || sources.some(s => !SOURCES.includes(s))) throw new Error('Sources must contain ctgov and/or ctis');
+  if (!Array.isArray(sources) || !sources.length || sources.some(s => !SOURCES.includes(s))) throw new Error('Sources must contain ctgov, ctis and/or isrctn');
   if (!Number.isInteger(limit) || limit < 1 || limit > 1000) throw new Error('limit must be an integer from 1 to 1000');
   if (typeof query !== 'string' || query.length > 500) throw new Error('query must be at most 500 characters');
   const searchCriteria = Object.fromEntries(sources.map(source => [source, buildSearchCriteria(source, query, searchMode)]));
