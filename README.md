@@ -132,3 +132,9 @@ If a live search times out, request fewer records. Where your client allows it, 
 The server runs locally over stdio. Hosted MCP access, automatic deduplication, and full registry synchronization are not implemented.
 
 For implementation details and test evidence, see the [verification notes](docs/verification.md).
+
+## License
+
+Licensed under the [MIT License](LICENSE). Copyright (c) 2026 monikasekelja-main.
+
+You may use, modify, and distribute the software under the license terms. Registry data and third-party dependencies remain subject to their own terms; see the [source-access matrix](docs/source-access-matrix.md).
