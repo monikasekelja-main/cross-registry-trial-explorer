@@ -1,7 +1,7 @@
 import { JsonClient, SourceError } from './http-client.mjs';
 
 export const SOURCES = ['ctgov', 'ctis', 'isrctn'];
-export const NORMALIZER_VERSION = '3';
+export const NORMALIZER_VERSION = '4';
 export const RECRUITMENT_STATUSES = ['unknown','recruiting','not_yet_recruiting','active_not_recruiting','completed','terminated','withdrawn','suspended','by_invitation'];
 export const STUDY_TYPES = ['interventional', 'observational', 'expanded_access'];
 export function validateFilters({ recruitmentStatus, studyType, primaryPurpose } = {}) {
@@ -120,7 +120,7 @@ export function normalizeCtgov(raw, retrievedAt = new Date().toISOString()) {
     sourceUpdatedAt: text(p.statusModule?.lastUpdatePostDateStruct?.date),
     retrievedAt, sourceUrl: `https://clinicaltrials.gov/study/${sourceId}`,
     identifiers: [{ registry: 'ctgov', value: sourceId }, ...array(ids.secondaryIdInfos, 'secondaryIdInfos')
-      .map(x => text(x?.id)).filter(Boolean).map(value => ({ registry: /^NCT\d{8}$/.test(value) ? 'ctgov' : /^\d{4}-\d{6}-\d{2}-\d{2}$/.test(value) ? 'ctis' : 'unspecified', value }))],
+      .map(x => text(x?.id)).filter(Boolean).map(value => ({ registry: /^NCT\d{8}$/.test(value) ? 'ctgov' : /^ISRCTN\d{8}$/.test(value) ? 'isrctn' : /^\d{4}-\d{6}-\d{2}-\d{2}$/.test(value) ? 'ctis' : 'unspecified', value }))],
     normalizerVersion: NORMALIZER_VERSION,
   };
 }
@@ -182,7 +182,7 @@ export function normalizeIsrctn(raw, retrievedAt = new Date().toISOString()) {
   const identifiers = [{ registry: 'isrctn', value: sourceId }];
   for (const entry of xmlList(trial.externalRefs?.secondaryNumbers?.secondaryNumber)) {
     const value = xmlText(entry);
-    if (value) identifiers.push({ registry: /^NCT\d{8}$/.test(value) ? 'ctgov' : /^\d{4}-\d{6}-\d{2}-\d{2}$/.test(value) ? 'ctis' : 'unspecified', value });
+    if (value) identifiers.push({ registry: /^NCT\d{8}$/.test(value) ? 'ctgov' : /^ISRCTN\d{8}$/.test(value) ? 'isrctn' : /^\d{4}-\d{6}-\d{2}-\d{2}$/.test(value) ? 'ctis' : 'unspecified', value });
   }
   const nct = xmlText(trial.externalRefs?.clinicalTrialsGovNumber);
   if (/^NCT\d{8}$/.test(nct ?? '') && !identifiers.some(x => x.value === nct)) identifiers.push({ registry: 'ctgov', value: nct });
@@ -213,7 +213,7 @@ export function createAdapters({ clients = {} } = {}) {
   const ctis = clients.ctis ?? new JsonClient();
   return {
     isrctn: {
-      async collect({ query = '', searchMode = 'condition', limit = 10, signal, ...filters }) {
+      async collect({ query = '', searchMode = 'condition', limit = 10, signal, includeRecruitment = false, ...filters }) {
         const url = new URL('https://www.isrctn.com/api/query/format/default');
         for (const [key, value] of Object.entries(buildSearchCriteria('isrctn', query, searchMode, filters))) url.searchParams.set(key, value);
         const filtered = Object.values(filters).some(x => x !== undefined);
@@ -224,7 +224,7 @@ export function createAdapters({ clients = {} } = {}) {
         if (typeof count !== 'string' || !/^\d+$/.test(count) || !Number.isSafeInteger(Number(count))) throw new SourceError('Invalid ISRCTN totalCount');
         const rows = xmlList(page.fullTrial);
         let statuses = new Map();
-        if (filters.recruitmentStatus && rows.length) {
+        if ((filters.recruitmentStatus || includeRecruitment) && rows.length) {
           const whoUrl = new URL(url); whoUrl.pathname = '/api/query/format/who';
           const whoPage = await isrctn.xml(whoUrl, { signal });
           if (!Object.hasOwn(whoPage, 'trials')) throw new SourceError('Missing ISRCTN WHO trials');

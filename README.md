@@ -1,6 +1,6 @@
 # Cross-registry Trial Explorer
 
-Search **ClinicalTrials.gov**, the **EU Clinical Trials Information System (CTIS)** and **ISRCTN** from one AI assistant connection.
+Search **ClinicalTrials.gov**, the **EU Clinical Trials Information System (CTIS)** and **ISRCTN** from one AI assistant connection. Build evidence-backed drug–target landscapes with ChEMBL and Open Targets.
 
 The app searches all three registries, shows which source each result came from, and saves the records on your computer so you can search them again later.
 
@@ -12,6 +12,7 @@ The app searches all three registries, shows which source each result came from,
 - Read trial information and inspect the original source data.
 - Search records you have already saved, without contacting the registries again.
 - Check when records were retrieved and whether a source failed.
+- Build a disease-specific drug–target landscape, inspect unresolved interventions, and export the evidence.
 
 ## Set up
 
@@ -59,6 +60,18 @@ Then try:
 
 > Search my saved CTIS records for trials in Italy.
 
+## Clinical target landscapes
+
+Ask your assistant:
+
+> Build an ongoing clinical target landscape for cystic fibrosis across all three registries. Poll the job until it finishes, show the supporting trials and unresolved interventions, and export JSON and CSV.
+
+The server collects a bounded trial sample, resolves drug names with ChEMBL, and adds curated target/mechanism evidence with Open Targets annotations. It keeps comparators, background-treatment uncertainty, unknown identities, sources and retrieval dates visible. A drug mentioned in a trial is not automatically a new target program.
+
+Landscape work returns a **job ID** immediately. Your assistant can check progress, resume interrupted work, inspect paginated results and export an immutable snapshot. Keep the local MCP server running while work proceeds. Reconnect after updating to discover the new tools.
+
+See the [landscape guide](docs/clinical-target-landscape.md) for parameters, evidence rules, terminal commands, limits and validation. The first release is a developer-validated CF pilot; broader clinical completeness and expert review are not established.
+
 ## Available MCP tools
 
 | Tool | What it does |
@@ -67,6 +80,12 @@ Then try:
 | `search_imported_trials` | Searches records already saved on your computer. |
 | `get_trial` | Opens a saved record. Set `includeRaw` to `true` to include its original source data. |
 | `get_source_status` | Shows saved-record counts, previous imports, and source failures. |
+| `resolve_intervention` | Resolves exact drug names and source aliases, preserving ambiguity. |
+| `get_drug_targets` | Retrieves curated mechanisms, targets and references. |
+| `get_clinical_target_landscape` | Starts a bounded disease landscape job. |
+| `get_landscape_job` | Checks progress and reads results, unresolved entries or registrations. |
+| `resume_landscape_job` / `cancel_landscape_job` | Controls work while retaining checkpoints. |
+| `export_landscape` / `compare_landscapes` | Exports evidence and compares saved snapshots. |
 
 A live search returns up to **5 records per source by default**. You can request up to 20 per source. Larger searches take longer because CTIS retrieves each trial’s details separately.
 
@@ -155,7 +174,7 @@ If your AI application cannot connect, check that Node.js is version 24 or newer
 
 If a live search times out, request fewer records. Where your client allows it, set its tool timeout to 150 seconds; the server stops live calls after 120 seconds.
 
-The server runs locally over stdio. Hosted MCP access, automatic deduplication, and full registry synchronization are not implemented.
+The server runs locally over stdio. Hosted MCP access and full registry synchronization are not implemented. Landscape jobs group registrations only through explicit registry identifiers; ordinary trial searches retain separate source records.
 
 For implementation details and test evidence, see the [verification notes](docs/verification.md).
 

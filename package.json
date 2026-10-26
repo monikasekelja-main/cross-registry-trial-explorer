@@ -3,7 +3,7 @@
   "author": "monikasekelja-main (https://github.com/monikasekelja-main)",
   "license": "MIT",
   "description": "Search ClinicalTrials.gov, EU CTIS and ISRCTN through one MCP server, with versioned source records and local search.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "engines": {
@@ -17,6 +17,8 @@
     "start:mcp": "node src/mcp-stdio.mjs",
     "test:mcp": "node --test test/mcp.test.mjs",
     "mcp:config": "node scripts/mcp-config.mjs",
+    "landscape": "node src/landscape-cli.mjs",
+    "smoke:landscape:live": "node scripts/smoke-landscape-live.mjs",
     "smoke:live": "node scripts/smoke-live.mjs",
     "smoke:mcp:live": "node scripts/smoke-mcp-live.mjs"
   },

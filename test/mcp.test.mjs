@@ -46,7 +46,7 @@ for (const mode of ['legacy', 'auto']) {
     await client.connect(transport);
     assert.equal(client.getServerVersion().name, 'clinical-trials');
     const { tools } = await client.listTools();
-    assert.deepEqual(tools.map(x => x.name).sort(), ['get_source_status','get_trial','search_imported_trials','search_trials']);
+    assert.deepEqual(tools.map(x => x.name).sort(), ['get_source_status','get_trial','search_imported_trials','search_trials','resolve_intervention','get_drug_targets','get_clinical_target_landscape','get_landscape_job','resume_landscape_job','cancel_landscape_job','export_landscape','compare_landscapes'].sort());
     assert.equal(tools.find(x => x.name === 'search_trials').annotations.readOnlyHint, false);
     const searched = output(await client.callTool({ name: 'search_imported_trials', arguments: { q: 'melanoma', limit: 1 } }));
     assert.equal(searched.totalCount, 2); assert.equal(searched.countUnit, 'source_records'); assert.ok(searched.nextCursor);

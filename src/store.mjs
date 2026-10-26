@@ -20,9 +20,13 @@ function integer(value, fallback, max) {
 
 export class Store {
   constructor(path = '.data/trials.sqlite') {
+    this.path = path;
     if (path !== ':memory:') mkdirSync(dirname(path), { recursive: true });
     this.db = new DatabaseSync(path);
     this.db.exec(`PRAGMA journal_mode=WAL; PRAGMA busy_timeout=5000;
+      CREATE TABLE IF NOT EXISTS evidence (key TEXT NOT NULL, hash TEXT NOT NULL, retrieved_at TEXT NOT NULL, data TEXT NOT NULL, PRIMARY KEY(key,hash,retrieved_at));
+      CREATE TABLE IF NOT EXISTS landscape_snapshots (id TEXT PRIMARY KEY, data TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS landscape_jobs (id TEXT PRIMARY KEY, data TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS metadata (key TEXT PRIMARY KEY, value INTEGER NOT NULL);
       INSERT OR IGNORE INTO metadata VALUES ('revision',0);
       CREATE TABLE IF NOT EXISTS versions (
@@ -38,6 +42,30 @@ export class Store {
         status TEXT NOT NULL, scope TEXT NOT NULL, imported INTEGER NOT NULL, error TEXT);
     `);
   }
+  evidenceGet(key) {
+    const row = this.db.prepare('SELECT data FROM evidence WHERE key=? ORDER BY retrieved_at DESC,rowid DESC LIMIT 1').get(key);
+    return row ? JSON.parse(row.data) : null;
+  }
+  evidenceVersion(key, checksum, retrievedAt) {
+    const row = this.db.prepare('SELECT data FROM evidence WHERE key=? AND hash=? AND retrieved_at=?').get(key, checksum, retrievedAt);
+    return row ? JSON.parse(row.data) : null;
+  }
+  registrationVersion(source, id, checksum) {
+    const row = this.db.prepare('SELECT * FROM versions WHERE source=? AND source_id=? AND hash=?').get(source, id, checksum);
+    return row ? { source, sourceId: id, versionHash: checksum, retrievedAt: row.captured_at, normalizerVersion: row.normalizer_version, raw: JSON.parse(row.raw) } : null;
+  }
+  evidencePut(key, value) {
+    const evidence = { ...value, key, hash: hash(value.raw) };
+    this.db.prepare('INSERT OR REPLACE INTO evidence VALUES (?,?,?,?)').run(key, evidence.hash, evidence.retrievedAt, JSON.stringify(evidence));
+    return evidence;
+  }
+  saveLandscape(job) { this.db.prepare('INSERT INTO landscape_jobs VALUES (?,?) ON CONFLICT(id) DO UPDATE SET data=excluded.data').run(job.id, JSON.stringify(job)); }
+  claimLandscape(job, expected) {
+    return this.db.prepare('UPDATE landscape_jobs SET data=? WHERE id=? AND data=?').run(JSON.stringify(job), job.id, expected).changes === 1;
+  }
+  saveLandscapeSnapshot(job) { this.db.prepare('INSERT INTO landscape_snapshots VALUES (?,?)').run(job.snapshotId, JSON.stringify(job)); }
+  loadLandscapeSnapshot(id) { const row = this.db.prepare('SELECT data FROM landscape_snapshots WHERE id=?').get(id); return row ? JSON.parse(row.data) : null; }
+  loadLandscape(id) { const row = this.db.prepare('SELECT data FROM landscape_jobs WHERE id=?').get(id); return row ? JSON.parse(row.data) : null; }
   close() { this.db.close(); }
   revision() { return Number(this.db.prepare("SELECT value FROM metadata WHERE key='revision'").get().value); }
 

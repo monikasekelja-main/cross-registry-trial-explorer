@@ -1,0 +1,20 @@
+{
+  "version": "2026-10-26.1",
+  "diseaseId": "MONDO_0009061",
+  "canonicalName": "cystic fibrosis",
+  "reviewedSynonyms": ["mucoviscidosis"],
+  "ambiguousAbbreviations": ["CF"],
+  "diseaseSource": "https://platform.opentargets.org/disease/MONDO_0009061",
+  "mechanismAnchors": [
+    {
+      "drugId": "CHEMBL2010601",
+      "targetId": "CHEMBL4051",
+      "targetSymbol": "CFTR",
+      "relationship": "direct",
+      "diseaseRelevance": "underlying_disease_mechanism",
+      "reference": "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=0ab0c9f8-3eee-4e0f-9f3f-c1e16aaffe25",
+      "scope": "Ivacaftor–CFTR mechanism anchor only. Does not establish any trial's intervention role, recruitment, efficacy, novelty or patient suitability."
+    }
+  ],
+  "reviewStatus": "Developer-reviewed identity/mechanism pilot anchors; not an independent clinical audit"
+}

@@ -84,3 +84,24 @@ The shared live tool, saved search, CLI and local HTTP search now accept `recrui
 The offline suite covers filter composition/validation, real MCP input schemas, filter provenance, exclusion of unknown/invitation/observational/diagnostic classifications, scan limits, WHO status joins, local facets and cursor invalidation. All 45 tests passed. Live records and report remain ignored under `.data/mcp-filtered-smoke-report.json`.
 
 Limits: CTIS scope 3 is a conservative treatment criterion. ISRCTN status is registry-published and may be date-derived. The scans are bounded, registry statuses can be stale, and recruiting at trial/country level does not guarantee a particular site is enrolling. No patient eligibility assessment or full registry mirror is implemented.
+
+## Clinical target landscape pilot — 26 October 2026
+
+Implemented within the existing MCP server, version 0.2.0:
+
+- Exact ChEMBL preferred-name/synonym identity resolution, ambiguity handling, parent/form identity and explicit combination/active-substance handling.
+- Curated mechanism/target retrieval from ChEMBL, integrated Open Targets annotations, references, species/components, directness and shared lineage.
+- Canonical disease resolution with a narrowly reviewed CF profile. A developer-reviewed ivacaftor–CFTR anchor uses the Kalydeco label; it is not a general clinical expert audit.
+- Bounded multi-registry jobs with ongoing/recruiting/historical views, explicit-ID grouping, intervention-role evidence, unresolved/excluded sections and role-qualified phases. Drug-wide maximum phase is not used as disease-specific phase.
+- Durable per-source/per-intervention checkpoints, cancellation/resume, atomic job claims, immutable completed snapshots, comparison and local JSON/CSV exports. JSON includes the exact raw source versions and enrichment responses referenced by the snapshot.
+- Existing trial tools remain compatible. Added CLI, tool guide and live MCP smoke script.
+
+All **61 automated tests passed** using Node.js 24+. They cover the existing 45 registry/transport cases and 16 landscape cases: identity anchors/ambiguity, source mismatch, partial failures, cache refresh, status views, role separation, gene-payload non-inference, disease-specific phase, grouping, restart persistence, cancellation, concurrent resume protection, snapshot immutability, historical raw evidence and CSV escaping.
+
+`node scripts/smoke-landscape-live.mjs` uses the official MCP client and a real stdio server. It verifies ivacaftor/CHEMBL2010601 → direct CFTR/CHEMBL4051 and the Open Targets CFTR gene annotation, then runs a CF historical sample with ten registrations per registry and up to forty intervention names. The pilot returned thirty source registrations and nine drug–mechanism rows. These are candidate landscape links, not nine proven active target programs or nine unique targets. Source totals at verification were 1125 CT.gov interventional registrations, 38 CTIS candidates and approximately 73 ISRCTN candidates; totals overlap and are not combined.
+
+Live reports, jobs, immutable snapshots and exports remain local under ignored `.data/`. They preserve unresolved classifications and conservative role limitations. The CLI identity lookup and historical snapshot export were also exercised. Details and remaining scope limits are in [the landscape guide](clinical-target-landscape.md).
+
+Not established in this pilot: complete global target coverage, general disease-specific curation, automatic complication classification, independent expert validation, page-level ingestion resume, full incremental registry mirrors or automatic literature extraction. Completion refers to the requested bounded job, not scientific completeness.
+
+Final pilot snapshot: `cd4ea28a-efd6-4d1e-952f-fdf4e140cd9b` (job `cdb0729a-5373-4ccc-b13b-ca73bd395b44`). It contains 30 source registrations, nine candidate drug–mechanism rows, 35 unresolved intervention occurrences and nine intentionally excluded non-drug occurrences. The exact raw versions of all 30 registry records and 95 enrichment responses were exported and their hashes verified. No complete investigational-treatment evidence chain was established by this small sample (`rowsWithEstablishedInvestigationalRole=0`); observed phases and candidate mechanisms must not be presented as nine confirmed active target programs. This conservative result is retained rather than filled with inferred roles or mechanisms.
