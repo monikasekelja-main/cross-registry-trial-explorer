@@ -66,7 +66,7 @@ Ask your assistant:
 
 > Build an ongoing clinical target landscape for cystic fibrosis across all three registries. Poll the job until it finishes, show the supporting trials and unresolved interventions, and export JSON and CSV.
 
-The server collects a bounded trial sample, resolves drug names with ChEMBL, and adds curated target/mechanism evidence with Open Targets annotations. It keeps comparators, background-treatment uncertainty, unknown identities, sources and retrieval dates visible. A drug mentioned in a trial is not automatically a new target program.
+By default, the server collects a bounded trial sample, resolves drug names with ChEMBL, and adds curated target/mechanism evidence with Open Targets annotations. It keeps comparators, background-treatment uncertainty, unknown identities, sources and retrieval dates visible. A drug mentioned in a trial is not automatically a new target program. To collect every matching interventional ClinicalTrials.gov record, set `collectAllCtgov: true`; to attempt every intervention in the selected status view, set `enrichAllInterventions: true`. Other registries keep their source bounds. Unresolved names remain visible, and full collection is reported only when cursor exhaustion and the registry total reconcile.
 
 Landscape work returns a **job ID** immediately. Your assistant can check progress, resume interrupted work, inspect paginated results and export an immutable snapshot. Keep the local MCP server running while work proceeds. Reconnect after updating to discover the new tools.
 
@@ -82,7 +82,7 @@ See the [landscape guide](docs/clinical-target-landscape.md) for parameters, evi
 | `get_source_status` | Shows saved-record counts, previous imports, and source failures. |
 | `resolve_intervention` | Resolves exact drug names and source aliases, preserving ambiguity. |
 | `get_drug_targets` | Retrieves curated mechanisms, targets and references. |
-| `get_clinical_target_landscape` | Starts a bounded disease landscape job. |
+| `get_clinical_target_landscape` | Starts a disease landscape job with explicit collection and enrichment limits. |
 | `get_landscape_job` | Checks progress and reads results, unresolved entries or registrations. |
 | `resume_landscape_job` / `cancel_landscape_job` | Controls work while retaining checkpoints. |
 | `export_landscape` / `compare_landscapes` | Exports evidence and compares saved snapshots. |

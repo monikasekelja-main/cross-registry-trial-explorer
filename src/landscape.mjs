@@ -68,15 +68,17 @@ export class LandscapeService {
     this.exportRoot = exportRoot ?? resolve(store.path === ':memory:' ? '.data' : dirname(store.path), 'exports');
     this.running = new Map(); this.closed = false;
   }
-  start({ disease, view = 'ongoing', sources = SOURCES, limitPerSource = 100, maxInterventions = 100, refreshEvidence = false } = {}) {
+  start({ disease, view = 'ongoing', sources = SOURCES, limitPerSource = 100, maxInterventions = 100, collectAllCtgov = false, enrichAllInterventions = false, refreshEvidence = false } = {}) {
     if (this.running.size || this.closed) throw new Error('A landscape job is running or the service is closing');
     disease = validateName(disease);
     if (!['ongoing','recruiting','historical'].includes(view)) throw new Error('view must be ongoing, recruiting or historical');
     if (!Array.isArray(sources) || !sources.length || sources.some(s => !SOURCES.includes(s))) throw new Error('Invalid sources');
     if (!Number.isInteger(limitPerSource) || limitPerSource < 1 || limitPerSource > 500) throw new Error('limitPerSource must be 1–500');
     if (!Number.isInteger(maxInterventions) || maxInterventions < 1 || maxInterventions > 200) throw new Error('maxInterventions must be 1–200');
+    if (typeof collectAllCtgov !== 'boolean' || typeof enrichAllInterventions !== 'boolean') throw new Error('Full-collection flags must be booleans');
+    if (collectAllCtgov && !sources.includes('ctgov')) throw new Error('collectAllCtgov requires the ctgov source');
     const job = { id: randomUUID(), status: 'queued', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
-      parameters: { disease, view, sources: [...new Set(sources)], limitPerSource, maxInterventions, refreshEvidence },
+      parameters: { disease, view, sources: [...new Set(sources)], limitPerSource, maxInterventions, collectAllCtgov, enrichAllInterventions, refreshEvidence },
       progress: { stage: 'queued', sourcesCompleted: 0, interventionsCompleted: 0 }, sources: [], registrations: [], resolutions: {}, errors: [] };
     this.save(job); this.launch(job); return this.get(job.id);
   }
@@ -91,7 +93,7 @@ export class LandscapeService {
     job.status = 'running'; job.ownerPid = process.pid; job.updatedAt = new Date().toISOString();
     if (!this.store.claimLandscape(job, expected)) throw new Error('Job changed concurrently; reload its status');
     const controller = new AbortController();
-    const promise = new Promise(resolve => setImmediate(resolve)).then(() => this.run(job, AbortSignal.any([controller.signal, AbortSignal.timeout(15 * 60000)])))
+    const promise = new Promise(resolve => setImmediate(resolve)).then(() => this.run(job, AbortSignal.any([controller.signal, AbortSignal.timeout((job.parameters.collectAllCtgov || job.parameters.enrichAllInterventions ? 360 : 15) * 60000)])))
       .catch(error => { job.status = controller.signal.aborted ? 'interrupted' : 'failed'; job.errors.push({ stage: job.progress.stage, error: error.message }); this.save(job); })
       .finally(() => this.running.delete(job.id));
     this.running.set(job.id, { controller, promise });
@@ -134,7 +136,7 @@ export class LandscapeService {
       job.progress.stage = `collecting_${source}`; this.save(job);
       const started = new Date().toISOString();
       try {
-        const collection = await this.adapters[source].collect({ query: job.disease.name, studyType: 'interventional', limit: job.parameters.limitPerSource, includeRecruitment: true, signal });
+        const collection = await this.adapters[source].collect({ query: job.disease.name, studyType: 'interventional', limit: job.parameters.limitPerSource, includeRecruitment: true, ...(source === 'ctgov' ? { allRecords: job.parameters.collectAllCtgov ?? false } : {}), signal });
         signal.throwIfAborted();
         this.store.commitSource(source, collection, { query: job.disease.name, landscapeJobId: job.id, limit: job.parameters.limitPerSource }, started);
         for (const { trial, raw } of collection.records) {
@@ -142,7 +144,7 @@ export class LandscapeService {
           job.registrations.push({ ...trial, versionHash: saved.versionHash, interventionDetails: extractInterventions(trial, raw) });
         }
         job.sources.push({ source, status: 'ok', imported: collection.records.length, upstreamTotal: collection.upstreamTotal, truncated: collection.truncated,
-          scanned: collection.scanned, upstreamTotalScope: collection.upstreamTotalScope, completedAt: new Date().toISOString() });
+          scanned: collection.scanned, reconciled: collection.reconciled, reportedTotals: collection.reportedTotals, upstreamTotalScope: collection.upstreamTotalScope, completedAt: new Date().toISOString() });
       } catch (error) {
         signal.throwIfAborted();
         this.store.failSource(source, { landscapeJobId: job.id }, started, error);
@@ -161,12 +163,16 @@ export class LandscapeService {
     entries.sort((a,b) => (priority[a.intervention.role] ?? 2) - (priority[b.intervention.role] ?? 2));
     const nameKey = name => name.trim().toLowerCase();
     const names = [...new Set(entries.map(e => nameKey(e.name)))];
-    job.coverage = { bounded: true, complete: false, reason: 'Bounded registry samples and enrichment budget; not a complete clinical pipeline',
+    const interventionLimit = job.parameters.enrichAllInterventions ? names.length : job.parameters.maxInterventions;
+    job.progress.interventionsTotal = Math.min(names.length, interventionLimit);
+    const ctgov = job.sources.find(s => s.source === 'ctgov');
+    job.coverage = { bounded: true, complete: false, ctgovComplete: Boolean(job.parameters.collectAllCtgov && ctgov?.status === 'ok' && ctgov.reconciled && !ctgov.truncated),
+      reason: 'See per-source exhaustion/reconciliation and enrichment coverage; this is not a complete global clinical pipeline',
       registrations: job.registrations.length, selectedRegistrations: selected.length, explicitIdentifierGroups: job.groups.length,
-      distinctInterventionNames: names.length, enrichmentLimit: job.parameters.maxInterventions, omittedInterventionNames: names.slice(job.parameters.maxInterventions),
+      distinctInterventionNames: names.length, enrichmentLimit: job.parameters.enrichAllInterventions ? null : job.parameters.maxInterventions, allInterventionsRequested: job.parameters.enrichAllInterventions ?? false, omittedInterventionNames: names.slice(interventionLimit),
       failures: job.sources.filter(s => s.status === 'failed'), sourceCoverage: job.sources,
       diseaseScope: 'Disease-context trials; underlying disease versus complications requires evidence review', statusView: job.parameters.view };
-    for (const name of names.slice(0, job.parameters.maxInterventions)) {
+    for (const name of names.slice(0, interventionLimit)) {
       signal.throwIfAborted(); if (job.resolutions[name]) continue;
       job.progress.stage = 'enriching_interventions'; job.progress.currentIntervention = name; this.save(job);
       try {
@@ -231,8 +237,10 @@ export class LandscapeService {
     job.summary = { mappedDrugTargetRows: job.rows.length, rowsWithEstablishedInvestigationalRole: job.rows.filter(r => r.supportingRegistrations.some(s => s.clinicalDevelopmentEvidence)).length,
       unresolvedInterventionOccurrences: job.unresolved.length, excludedNonDrugOccurrences: job.excluded.length, mechanismFailures: Object.values(job.resolutions).filter(r => r.status === 'failed' || r.targets?.status === 'partial_failure').length,
       interpretation: 'Rows are candidate drug–mechanism links in disease-context trials. Comparator, background and unknown-role evidence must not be reported as active target programs. Highest phase uses only explicit investigational treatment evidence; null means not established.' };
+    job.coverage.enrichmentAttemptsComplete = names.slice(0, interventionLimit).every(name => job.resolutions[name]);
+    job.coverage.allInterventionNamesAttempted = names.every(name => job.resolutions[name]);
     job.contentHash = digest({ parameters: job.parameters, disease: job.disease, versions: job.versions, rows: job.rows, coverage: job.coverage, unresolved: job.unresolved, excluded: job.excluded, registrations: job.registrations });
-    job.status = job.sources.some(s => s.status === 'failed') || job.summary.mechanismFailures ? 'partial_failure' : 'complete';
+    job.status = job.sources.some(s => s.status === 'failed') || job.summary.mechanismFailures || (job.parameters.collectAllCtgov && !job.coverage.ctgovComplete) ? 'partial_failure' : 'complete';
     job.progress.stage = 'finished'; job.snapshotId = randomUUID(); this.save(job); this.store.saveLandscapeSnapshot(job);
   }
   get(id, { offset = 0, limit = 20, section = 'rows' } = {}) {
@@ -267,7 +275,7 @@ export class LandscapeService {
   compare(firstId, secondId) {
     const a = this.load(firstId); const b = this.load(secondId);
     if (![a,b].every(j => ['complete','partial_failure'].includes(j.status))) throw new Error('Compare finished snapshots only');
-    const scope = j => ({ disease: j.disease.id, view: j.parameters.view, sources: j.parameters.sources.slice().sort(), limitPerSource: j.parameters.limitPerSource, maxInterventions: j.parameters.maxInterventions });
+    const scope = j => ({ disease: j.disease.id, view: j.parameters.view, sources: j.parameters.sources.slice().sort(), limitPerSource: j.parameters.limitPerSource, maxInterventions: j.parameters.maxInterventions, collectAllCtgov: j.parameters.collectAllCtgov ?? false, enrichAllInterventions: j.parameters.enrichAllInterventions ?? false });
     const comparableRow = row => ({ ...row, evidence: row.evidence.map(({retrievedAt, ...e}) => e), supportingRegistrations: row.supportingRegistrations.map(({retrievedAt, ...s}) => s) });
     if (a.disease.id !== b.disease.id || digest(scope(a)) !== digest(scope(b))) throw new Error('Snapshots need the same disease and collection parameters');
     const left = new Map(a.rows.map(r => [r.key, r])); const right = new Map(b.rows.map(r => [r.key, r]));

@@ -7,10 +7,11 @@ let store; let landscapes;
 try {
   const { values, positionals } = parseArgs({ allowPositionals: true, options: {
     ...Object.fromEntries(['db','disease','view','limitPerSource','maxInterventions','section','offset','limit'].map(name => [name,{type:'string'}])),
+    collectAllCtgov: { type:'boolean', default:false }, enrichAllInterventions: { type:'boolean', default:false },
     refreshEvidence: { type:'boolean', default:false },
   } });
   const [command,id,otherId] = positionals;
-  if (!['run','get','resume','export','compare','resolve','targets'].includes(command)) throw new Error('Usage: node src/landscape-cli.mjs run --disease "cystic fibrosis" [--view ongoing|recruiting|historical] [--limitPerSource 100] [--maxInterventions 100] [--db PATH]; or get|resume|export JOB_ID; compare FIRST_ID SECOND_ID; resolve NAME; targets CHEMBL_ID');
+  if (!['run','get','resume','export','compare','resolve','targets'].includes(command)) throw new Error('Usage: node src/landscape-cli.mjs run --disease "cystic fibrosis" [--view ongoing|recruiting|historical] [--limitPerSource 100] [--maxInterventions 100] [--collectAllCtgov] [--enrichAllInterventions] [--db PATH]; or get|resume|export JOB_ID; compare FIRST_ID SECOND_ID; resolve NAME; targets CHEMBL_ID');
   store = new Store(values.db); const evidence = new EvidenceService(store); landscapes = new LandscapeService(store,{evidence});
   const controller = new AbortController();
   process.once('SIGINT', () => { controller.abort(new Error('Cancelled')); landscapes.close().catch(()=>{}); });
@@ -23,7 +24,7 @@ try {
   else if (command === 'compare') output = landscapes.compare(id,otherId);
   else {
     output = command === 'resume' ? landscapes.resume(id) : landscapes.start({disease:values.disease,view:values.view,
-      limitPerSource:values.limitPerSource === undefined ? 100 : Number(values.limitPerSource),maxInterventions:values.maxInterventions === undefined ? 100 : Number(values.maxInterventions),refreshEvidence:values.refreshEvidence});
+      limitPerSource:values.limitPerSource === undefined ? 100 : Number(values.limitPerSource),collectAllCtgov:values.collectAllCtgov,enrichAllInterventions:values.enrichAllInterventions,maxInterventions:values.maxInterventions === undefined ? 100 : Number(values.maxInterventions),refreshEvidence:values.refreshEvidence});
     process.stderr.write(`Landscape job ${output.jobId}; checkpoints saved in ${store.path}\n`);
     await landscapes.running.get(output.jobId).promise;
     output = landscapes.get(output.jobId);

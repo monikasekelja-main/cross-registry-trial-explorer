@@ -201,3 +201,13 @@ test('export escapes spreadsheet formulas and keeps immutable source evidence', 
   const newData=collection();newData.records[0].raw.hasResults=true;store.commitSource('ctgov',newData,{},new Date().toISOString());
   const preserved=JSON.parse(readFileSync(service.export(job.snapshotId).json));assert.equal(preserved.rawRegistrations[0].raw.hasResults,false);
 });
+
+test('full landscape modes override only CT.gov sampling and attempt every intervention', async t => {
+  const {store,evidence}=setup(t);let allFlag;
+  const service=new LandscapeService(store,{evidence,adapters:{ctgov:{collect:async args=>{
+    allFlag=args.allRecords;const data=collection();data.records.push(...collection({id:'NCT00000002',name:'unknown-one'}).records,...collection({id:'NCT00000003',name:'unknown-two'}).records);
+    return {...data,upstreamTotal:3,reconciled:true};
+  }}}});t.after(()=>service.close());
+  const job=await finished(service,service.start({disease:'cystic fibrosis',sources:['ctgov'],limitPerSource:1,maxInterventions:1,collectAllCtgov:true,enrichAllInterventions:true}).jobId);
+  assert.equal(allFlag,true);assert.equal(job.coverage.ctgovComplete,true);assert.equal(job.coverage.omittedInterventionNames.length,0);assert.equal(job.coverage.allInterventionNamesAttempted,true);assert.equal(job.progress.interventionsCompleted,3);
+});

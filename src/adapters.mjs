@@ -248,10 +248,12 @@ export function createAdapters({ clients = {} } = {}) {
       },
     },
     ctgov: {
-      async collect({ query = '', searchMode = 'condition', limit = 10, signal, ...filters }) {
+      async collect({ query = '', searchMode = 'condition', limit = 10, signal, allRecords = false, ...filters }) {
         const searchCriteria = buildSearchCriteria('ctgov', query, searchMode, filters);
         const records = []; const seen = new Set(); const tokens = new Set(); let token; let upstreamTotal = null; let scanned = 0;
-        const scanLimit = filters.recruitmentStatus === 'unknown' ? Math.max(limit, 100) : limit;
+        const resultLimit = allRecords ? Infinity : limit;
+        const scanLimit = allRecords ? Infinity : filters.recruitmentStatus === 'unknown' ? Math.max(limit, 100) : limit;
+        const totals = new Set();
         do {
           const url = new URL('https://clinicaltrials.gov/api/v2/studies');
           url.searchParams.set('format', 'json'); url.searchParams.set('countTotal', 'true');
@@ -263,7 +265,7 @@ export function createAdapters({ clients = {} } = {}) {
           if (!Array.isArray(page.studies)) throw new SourceError('ClinicalTrials.gov page is missing studies');
           if (page.totalCount !== undefined) {
             if (!Number.isSafeInteger(page.totalCount) || page.totalCount < 0) throw new SourceError('Invalid ClinicalTrials.gov totalCount');
-            upstreamTotal = page.totalCount;
+            upstreamTotal = page.totalCount; totals.add(upstreamTotal);
           }
           for (const raw of page.studies) {
             const trial = normalizeCtgov(raw);
@@ -278,7 +280,7 @@ export function createAdapters({ clients = {} } = {}) {
           if (next) tokens.add(next);
           if (next && page.studies.length === 0) throw new SourceError('ClinicalTrials.gov returned an empty continuation page');
           token = next;
-          if (records.length >= limit || scanned >= scanLimit || !token) return { records: records.slice(0, limit), upstreamTotal, truncated: Boolean(token) || records.length > limit, scanned, filterCoverage: filters.recruitmentStatus === 'unknown' ? 'bounded_scan' : 'upstream', upstreamTotalScope: filters.recruitmentStatus === 'unknown' ? 'before local unknown-status filter' : 'includes requested source filters' };
+          if (records.length >= resultLimit || scanned >= scanLimit || !token) return { records: records.slice(0, resultLimit), upstreamTotal, truncated: Boolean(token) || records.length > resultLimit, scanned, reconciled: !token && totals.size === 1 && records.length === upstreamTotal, reportedTotals: [...totals], filterCoverage: filters.recruitmentStatus === 'unknown' ? 'bounded_scan' : 'upstream', upstreamTotalScope: filters.recruitmentStatus === 'unknown' ? 'before local unknown-status filter' : 'includes requested source filters' };
         } while (true);
       },
     },

@@ -86,7 +86,7 @@ The profile and pilot mechanism anchor are in [data/cf-reference.json](../data/c
 - Collection defaults to 100 registrations per registry, maximum 500. Existing CT.gov cursor and CTIS page pagination operate inside that bound. ISRCTN uses a bounded XML export. Different source totals can overlap and are not added.
 - All views collect an interventional sample first, then apply the requested status view. Therefore, a small sample can omit older recruiting records. Increase the collection bound if necessary; neither a short result nor zero rows proves no programs exist.
 - Enrichment defaults to 100 distinct intervention names, maximum 200. Explicit investigational products are prioritised before unknown/comparator/placebo roles. Omitted names and source truncation are reported. Successful completion means the requested bounded job finished, not that global coverage is complete.
-- Requests use the existing paced, bounded, retrying HTTP client. A job has a 15-minute execution budget. Successful checkpoints are saved after each source and intervention. A failed source resumes from the start of that source; page-level resumability is not implemented.
+- Requests use the existing paced, bounded, retrying HTTP client. A bounded job has a 15-minute execution budget; jobs requesting either full-collection option have a six-hour budget. Successful checkpoints are saved after each source and intervention. A failed source resumes from the start of that source; page-level resumability is not implemented.
 - Source failures never substitute an unrelated old search. Enrichment failures and missing mappings remain visible. Open Targets enrichment failure preserves available ChEMBL evidence as partial failure.
 - Evidence responses are content-versioned in SQLite and cached for seven days. Returned evidence retains its actual retrieval date and content hash. New jobs fetch registries again; `refreshEvidence: true` also refreshes enrichment. Expired evidence is not silently used when a refresh fails.
 - ChEMBL release metadata is recorded. Open Targets responses are hashed and dated; no unverified release identifier is asserted. Open Targets mechanism annotations may reuse ChEMBL, so they are not counted as independent corroboration.
@@ -128,3 +128,15 @@ The live check uses the official MCP client and a real stdio server. It verifies
 - [Open Targets drug sources](https://platform-docs.opentargets.org/drug): shared ChEMBL lineage and modality coverage limitations.
 
 No additional API keys are needed for these integrations. IUPHAR/BPS is not connected in this release; its current API requires a key. Publications, sponsor material and full protocol review are not automatically ingested. Software licensing does not replace source-data terms: check those before redistributing exported datasets.
+
+### Expanded collection
+
+Set `collectAllCtgov: true` on `get_clinical_target_landscape` to follow ClinicalTrials.gov pagination to exhaustion, overriding its `limitPerSource` sample cap. The query remains condition-focused and interventional; the selected status view is applied afterward. CTIS and ISRCTN keep their requested source bounds. `coverage.ctgovComplete` requires exhausted pagination, a stable reported total and an equal collected count. A changing registry total is reported as unreconciled rather than complete.
+
+Set `enrichAllInterventions: true` to override `maxInterventions` and attempt every distinct intervention name in that view. `coverage.allInterventionNamesAttempted` confirms attempts, not successful identification or proof that every clinical target is known. Unknown identities and failed evidence requests remain explicit. Existing successful evidence checkpoints and the seven-day evidence cache are reused.
+
+CLI equivalent:
+
+```sh
+node src/landscape-cli.mjs run --disease "cystic fibrosis" --view ongoing --collectAllCtgov --enrichAllInterventions
+```

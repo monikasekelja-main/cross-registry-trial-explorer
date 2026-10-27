@@ -1,4 +1,4 @@
-# Verification — updated 23 October 2026
+# Verification — updated 27 October 2026
 
 ## Environment
 
@@ -105,3 +105,9 @@ Live reports, jobs, immutable snapshots and exports remain local under ignored `
 Not established in this pilot: complete global target coverage, general disease-specific curation, automatic complication classification, independent expert validation, page-level ingestion resume, full incremental registry mirrors or automatic literature extraction. Completion refers to the requested bounded job, not scientific completeness.
 
 Final pilot snapshot: `cd4ea28a-efd6-4d1e-952f-fdf4e140cd9b` (job `cdb0729a-5373-4ccc-b13b-ca73bd395b44`). It contains 30 source registrations, nine candidate drug–mechanism rows, 35 unresolved intervention occurrences and nine intentionally excluded non-drug occurrences. The exact raw versions of all 30 registry records and 95 enrichment responses were exported and their hashes verified. No complete investigational-treatment evidence chain was established by this small sample (`rowsWithEstablishedInvestigationalRole=0`); observed phases and candidate mechanisms must not be presented as nine confirmed active target programs. This conservative result is retained rather than filled with inferred roles or mechanisms.
+
+## Expanded ClinicalTrials.gov collection — 27 October 2026
+
+All 64 automated tests pass, including cursor exhaustion beyond a one-record sample bound, rejection of count drift as reconciled coverage, and full-mode enrichment beyond the configured name cap. Live MCP verification collected 1,125 of 1,125 condition-matching interventional ClinicalTrials.gov records with stable totals and exhausted pagination, plus 38 CTIS and 56 interventional ISRCTN registrations (73 ISRCTN condition candidates scanned). The ongoing view selected 189 registrations and 249 distinct intervention names. These counts are observations from this run and do not establish global registry or target completeness.
+
+The expanded job completed through the official MCP client/stdio transport with all 249 names attempted, zero omitted names and zero evidence-service failures. Outcomes: 47 resolved, 142 unresolved, 3 ambiguous and 57 non-drug/excluded names. The immutable snapshot contains 26 candidate drug–mechanism rows; the flattened local CSV contains 136 supporting registration/intervention rows. Only one mechanism row meets the current strict investigational-treatment-role criterion. These are evidence links, not 26 confirmed active target programs. Snapshot: `add13327-8afa-489d-b44b-571c047e45ec`; local ignored artifacts include `.data/cf-expanded-report.json`, the JSON snapshot, trial-evidence CSV and a 249-name intervention-outcome audit CSV.
