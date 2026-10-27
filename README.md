@@ -68,9 +68,11 @@ Ask your assistant:
 
 By default, the server collects a bounded trial sample, resolves drug names with ChEMBL, and adds curated target/mechanism evidence with Open Targets annotations. It keeps comparators, background-treatment uncertainty, unknown identities, sources and retrieval dates visible. A drug mentioned in a trial is not automatically a new target program. To collect every matching interventional ClinicalTrials.gov record, set `collectAllCtgov: true`; to attempt every intervention in the selected status view, set `enrichAllInterventions: true`. Other registries keep their source bounds. Unresolved names remain visible, and full collection is reported only when cursor exhaustion and the registry total reconcile.
 
+CF landscapes automatically apply the reviewed drug/component mappings, exclude explicit non-CF bronchiectasis records, and check the reviewed completed trial. Recruitment/contact updates can retain a mapping; changed protocols require re-review. Unknown targets, mixed cohorts and conflicting development-status evidence stay visible. Ask to inspect `reviewApplications` and `excludedRegistrations` when reviewing a job.
+
 Landscape work returns a **job ID** immediately. Your assistant can check progress, resume interrupted work, inspect paginated results and export an immutable snapshot. Keep the local MCP server running while work proceeds. Reconnect after updating to discover the new tools.
 
-See the [landscape guide](docs/clinical-target-landscape.md) for parameters, evidence rules, terminal commands, limits and validation. The first release is a developer-validated CF pilot; broader clinical completeness and expert review are not established.
+See the [landscape guide](docs/clinical-target-landscape.md) for parameters, evidence rules, terminal commands, limits and validation. This remains a developer-validated CF pilot; broader clinical completeness and expert review are not established.
 
 ## Available MCP tools
 
@@ -83,7 +85,7 @@ See the [landscape guide](docs/clinical-target-landscape.md) for parameters, evi
 | `resolve_intervention` | Resolves exact drug names and source aliases, preserving ambiguity. |
 | `get_drug_targets` | Retrieves curated mechanisms, targets and references. |
 | `get_clinical_target_landscape` | Starts a disease landscape job with explicit collection and enrichment limits. |
-| `get_landscape_job` | Checks progress and reads results, unresolved entries or registrations. |
+| `get_landscape_job` | Checks progress and reads results, unresolved entries, review decisions and excluded registrations. |
 | `resume_landscape_job` / `cancel_landscape_job` | Controls work while retaining checkpoints. |
 | `export_landscape` / `compare_landscapes` | Exports evidence and compares saved snapshots. |
 
@@ -128,7 +130,7 @@ The CF review ledger adds source-backed identities and mechanisms to the 27 Octo
 node scripts/review-cf-landscape.mjs PATH_TO_SNAPSHOT.json --db .data/landscape-live.sqlite --out .data/exports
 ```
 
-This creates a new reviewed JSON, evidence CSV, intervention-review CSV and exclusion CSV. It preserves the original snapshot. The ledger applies only to its recorded snapshot; it is not automatically applied to new MCP jobs. Unknown targets remain blank, and registry phases/statuses require clinical review. See [the review workflow](docs/clinical-target-landscape.md#reviewed-cf-overlay).
+This creates a new reviewed JSON, evidence CSV, intervention-review CSV and exclusion CSV. It preserves the original snapshot. The standalone script remains tied to its recorded snapshot. New CF MCP jobs now apply the reviewed decisions automatically when the registration and protocol context match. Unknown targets remain blank, and registry phases/statuses require clinical review. See [the review workflow](docs/clinical-target-landscape.md#reviewed-cf-overlay).
 
 ## Understand the results
 

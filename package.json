@@ -3,7 +3,7 @@
   "author": "monikasekelja-main (https://github.com/monikasekelja-main)",
   "license": "MIT",
   "description": "Search ClinicalTrials.gov, EU CTIS and ISRCTN through one MCP server, with versioned source records and local search.",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "engines": {

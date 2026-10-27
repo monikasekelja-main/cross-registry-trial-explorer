@@ -1,0 +1,567 @@
+{
+  "version": "2026-10-27.1",
+  "ledgerVersion": "2026-10-27.1",
+  "contextSchema": 1,
+  "registrations": {
+    "ctis:2025-523403-29-00": {
+      "reviewedSourceVersion": "a538b77b683c4ed1353237756c856c53b76c89475950cb5bb56654099678bf06",
+      "contextHash": "bd8a330459d5e7bafa1a1c31d79d746ca0c8cc73245d8ffe84d611c2608a51c1"
+    },
+    "ctis:2024-519657-11-00": {
+      "reviewedSourceVersion": "a28a441a4245044e1020e557a74a10289733fb851a8f08fff364636875db35cc",
+      "contextHash": "e8748eb5f8e51e6608b942ee056f6be8da2c889dc5016e83f9160863c8f053c9"
+    },
+    "ctis:2024-518337-29-00": {
+      "reviewedSourceVersion": "1c878ff3a88659be7a19cbc247a5fa5c46856247991fb5546642100c50cb446c",
+      "contextHash": "519298e1fb3bb29016540e408251bea3c62bead7d9d0733a4955719f06ed62bd"
+    },
+    "ctgov:NCT06962852": {
+      "reviewedSourceVersion": "36dbbac7ef8b8145fffe368a384b7978587e5a411a35c904817caed6c45d8b0e",
+      "contextHash": "378a7be1ff2e59c939bd074f04a2a2db46d8b3d6fd8e20f2646017666ec2110b"
+    },
+    "ctis:2023-504909-37-00": {
+      "reviewedSourceVersion": "0773845a70ef65fe2ae9a61fb06288c45e980fa31722e637a314effd18f40ed4",
+      "contextHash": "3824da42ae722d0b96f0a1d12ff2348a2bcda3e64d7f8ad5593902c8dabfcfe1"
+    },
+    "ctgov:NCT07283770": {
+      "reviewedSourceVersion": "ba98fcee999f55516d1b6db934690511b0edb13b24580e76e7749665b3c9e345",
+      "contextHash": "cbf1e825f84661b3d60c2ec303389b10a4e985b5693d6a6af10fcc6ff84cd2f4"
+    },
+    "ctgov:NCT07813039": {
+      "reviewedSourceVersion": "8df2ac943183a68101eea80bdf8cd541ec84cd3dbd1f5c4e003302881da5fd86",
+      "contextHash": "7d2799a23509df6de8e8faff2d383768af4a74c395b83a110d30e42fa39d7912"
+    },
+    "ctgov:NCT05331183": {
+      "reviewedSourceVersion": "d654d5c438c8944f10a77e2b9b0049b616d83ea2767db81d3009280dcd64536d",
+      "contextHash": "7303f6c3b0c7cbeec2fa910f4aa3a2629bc807ebab06d88d7e333db4bb3b11c4"
+    },
+    "ctgov:NCT06460506": {
+      "reviewedSourceVersion": "dab0d3926147352e99633e80b9914cc064b4f73c80cd0632527232e0ec760920",
+      "contextHash": "bd3935ba9a36d6643adeac7421bc0f7cb929deb574c379bd872381d229fdc168"
+    },
+    "ctgov:NCT05422222": {
+      "reviewedSourceVersion": "c34524550560616ebf638d0dfa325f0d2a479d1b308e46c8a9b920d9fd64522e",
+      "contextHash": "75dc4ca65cd3558736120ed2dcaa321eb3dc78138a2462a724889861f1831c25"
+    },
+    "ctgov:NCT05444257": {
+      "reviewedSourceVersion": "4a53299491b38fe9d78c63163c122e0a9ad753158e8ca2b28e82bf1e50f61421",
+      "contextHash": "1129b58b2e80f533c9ff2a49f7ba39e31d63395f4ee4eec05c6992d908436ea4"
+    },
+    "ctgov:NCT05844449": {
+      "reviewedSourceVersion": "ab14bdd8e37eda57cb97524af678976dc1e843ebd16f34080ce2734b88a44552",
+      "contextHash": "d1a888772f4449301a99f5bd421152327729c9e33c4acd5d19fbe3b52191634f"
+    },
+    "ctgov:NCT07709494": {
+      "reviewedSourceVersion": "e3036815b08db49fdbb9721130b06ac869667d07c21d80831494826993654862",
+      "contextHash": "208446e0772a469932dda571cabd93091b35be7ac61662de135d96971e550d83"
+    },
+    "ctgov:NCT07275905": {
+      "reviewedSourceVersion": "0aa9d08830efcb7641539d017218ee440fae7141ae89a088190296f6a3f85142",
+      "contextHash": "01aaf2018a1acf55f1bdf5aaad5566422dce2e1355b0ddc8288691e6d83bdd70"
+    },
+    "ctgov:NCT07450547": {
+      "reviewedSourceVersion": "12cc7ef45786270cc5343246d36ff8cf727cacbb3cefca86c28595d3a54442b4",
+      "contextHash": "29ebbe904b93f216955d516f00fc954ca485c561f9fec6cab822a7c55b5d75b4"
+    },
+    "ctgov:NCT06963008": {
+      "reviewedSourceVersion": "ad58875c98c6a8c49cc99b909fe25b05d32958cd394eb6dda18954cbea069bd6",
+      "contextHash": "4eab7cc81645c0e470d96e9d84ec5131f95b4e2efe588c9fe776adc31babc8c9"
+    },
+    "ctgov:NCT07485543": {
+      "reviewedSourceVersion": "bb1c5685262577cf639f8f3a7a2df8e1673322617d7b0ebb4a6d51e888ef377a",
+      "contextHash": "3cbf4c5974858a5cd53f350ed035d0ad1687c36b534a92adada9c11e37b0c0af"
+    },
+    "ctgov:NCT07851831": {
+      "reviewedSourceVersion": "c4bafecfa9176e4d77e2ed2d6d827699284977e87a56a890da114c0e83d1150e",
+      "contextHash": "0b71bb9e173a1a3e19c0e0893d4e8169f7e73c35f21bb6cdd9279944bb4d4aa6"
+    },
+    "ctgov:NCT06981091": {
+      "reviewedSourceVersion": "ff4c06810ea76fee6b6abd52bfdc6499eb9553fbc6ea7681008ccdf9caa713de",
+      "contextHash": "534b7f52151f62bf09d9e1640a53d8cf5b90510d271d079b802c1d12f21c83a9"
+    },
+    "ctgov:NCT07437105": {
+      "reviewedSourceVersion": "0e087b9e7947ebe6441588622734015e14c9c78038620b5eac010a83210a2e10",
+      "contextHash": "9eee5d9156cc7fcefb608ba2d570c2c5d215ebebe5120fa4c17eaecbcc292ae8"
+    },
+    "ctgov:NCT05517655": {
+      "reviewedSourceVersion": "1024df76be1b255c623386d89ccc84c02252788fd2b5bc048593e7cf20d5e8f9",
+      "contextHash": "34c13ea2862147135a49ea6f2592d9711da3b3c9c1db4abd030839ea708605b5"
+    },
+    "ctgov:NCT07163078": {
+      "reviewedSourceVersion": "638f89a3d735e0fa6393dfdd4da0c162112a04e7ce9ab927b2d426a0917e6725",
+      "contextHash": "b140b0668a0365692187d8104c1377e16f8febdd2d0ec23c6586fab3fb9d0d8c"
+    },
+    "ctgov:NCT07720375": {
+      "reviewedSourceVersion": "117a9387f9fe3230d0e289e6b2ccf6bc085c7a08ff9199d762e5300e2b8d486f",
+      "contextHash": "ec1b58190779e7605a7be6cbbd94d9e625f7a3f2219f86c1549df0e782bff4ac"
+    },
+    "ctgov:NCT06810167": {
+      "reviewedSourceVersion": "8fd3a504b37c09b00ce3e23e186179a69ce25fd2ffc241c70dab2573896684a9",
+      "contextHash": "7c0e6a8a6263a3f624cfb12ff0e2390783805a5676bb35b245f48bf61c5ca746"
+    },
+    "ctgov:NCT06237335": {
+      "reviewedSourceVersion": "910517d75254066540fca7232bab65842c336166c92b44f1878c5372754ddf74",
+      "contextHash": "576efa1391da13b3408c25540531cb50751541fe2b1962203a8e8b011d6ff81e"
+    },
+    "ctgov:NCT06559150": {
+      "reviewedSourceVersion": "93810d1044eeceaf2036ba7fe536597e79744e97a4262de2dc9abedda06b9d6f",
+      "contextHash": "cc38e8da7beb265d9aceb5d7d96f606182c1fe4771469b199af1ae3515613821"
+    },
+    "ctgov:NCT06654752": {
+      "reviewedSourceVersion": "ac1e0450f0340bb06fe86e6fcd44fd6c5b0b59fae79dceed70a5886a75be88f7",
+      "contextHash": "9a7119c67fc1fb8ca9abb2ae3512475d993e0eba001e57cb5e0a9d35234a838c"
+    },
+    "ctgov:NCT07696091": {
+      "reviewedSourceVersion": "fcb79aedacb7f49d26e628195cbbc79455954fa0697a7d6fdaa5c3b0c46369c1",
+      "contextHash": "ac45cd3ffe2d3ad98288e7c3c36f25815a3aecb2a1e17b634dd94eaa238a6379"
+    },
+    "ctgov:NCT07696338": {
+      "reviewedSourceVersion": "9240bd852fcb1ca7abc43e60fef94b16239b020294692eab31758edaeae2e5a0",
+      "contextHash": "ec1d4b05b9e92f46adf048fc5cdb72d980bf10f78fb595b936ab3bea56ed126f"
+    },
+    "ctgov:NCT07688070": {
+      "reviewedSourceVersion": "f37f5d0e3f9da769e105bc0077ebdd05750f0f1f3c13c4791594993da3ac541c",
+      "contextHash": "638343209a42fc55bb951925e5b2af37e08fb1695b434e78aad089b8bfd6578d"
+    },
+    "ctgov:NCT05248230": {
+      "reviewedSourceVersion": "8cb792da4befd5a6bdeea4a4c09a8bd383ea9b9646321d10479b85d048165bb5",
+      "contextHash": "be04f1fe50df8c357bf2c29788d431028f61caf38336216507c04b0fa55f0f13"
+    },
+    "ctgov:NCT07223255": {
+      "reviewedSourceVersion": "7063debd7457f71c39ed5f64546133dbdcd0c07047454768113c261a9e4706c7",
+      "contextHash": "acbecde5ec1051b8b30947afe63e2e746f99b84110cbfbc7b8c900c6656b0172"
+    },
+    "ctgov:NCT05766774": {
+      "reviewedSourceVersion": "7c8df5474f03012f7369155bcd1d00e23cb97a3865127303666e93b7c1b371c3",
+      "contextHash": "d8c2349181330d4f79e73756f3e4b0eb47f4ff529839e057da57b10ff533f686"
+    },
+    "ctgov:NCT06660992": {
+      "reviewedSourceVersion": "49a1889d437091f3283e5861f4386d187b6e926700b5cf82aaf78f08edcf8c73",
+      "contextHash": "164174a763f15196fa2ce3b646801d88b16ca1c3d75fe835c51f63422529cf95"
+    },
+    "ctgov:NCT07616375": {
+      "reviewedSourceVersion": "a40b524542434af314a1ceeefdf66d42af2b9ec46735b1c12d78839c4edef6dc",
+      "contextHash": "4c6d9a35d5b433858fa51f1b610cbf115505a35249fd01d8873fbfa4b47e04a8"
+    },
+    "ctgov:NCT04731272": {
+      "reviewedSourceVersion": "8ceeb02f03c886cf0fc22736088569e9b13cbbf019637001a662f2875d137056",
+      "contextHash": "9216e8b9c9ceaf3586a3a81365a5af63cf4ae13152daadfb3d187a011c99fb1a"
+    },
+    "ctgov:NCT06747858": {
+      "reviewedSourceVersion": "b7ac4e2362dfbc08fbfcb7e58579c44f8a1e83012e09db1456cffe00051f82a5",
+      "contextHash": "0867fac59c95eb845ba0150485f657144db792029b4cd15a58741dc087cf3c24"
+    },
+    "ctgov:NCT05504837": {
+      "reviewedSourceVersion": "694f679aa41135298b0b8e80d9730782bce5594a4a74b6eafa8f2e4e284debaa",
+      "contextHash": "5bf0f4d892868b285b41ceadb7dcfd4daa6925af59b5d3eba65efe7db3333d01"
+    },
+    "ctgov:NCT07569419": {
+      "reviewedSourceVersion": "6c4530876952642582aaeb755b5e4d699d1f528639dc8c22af3b67efc47858aa",
+      "contextHash": "0b69906f95afe5e5a27174e39fdffec6ead74b36e1d712df59e05ed8dd9e6941"
+    },
+    "ctgov:NCT07780344": {
+      "reviewedSourceVersion": "78b1545fe80cb0e76252f9b08cc39dc7b110a55032c1b92aba0c3caacc011aea",
+      "contextHash": "a48310ce4df5d64b52fc492990ea9be8ce742794a3544c513aa040242977903d"
+    },
+    "ctgov:NCT04624490": {
+      "reviewedSourceVersion": "72adae6898f8485d14833f5489da363f60d0fc1d9a341119f9fc5bacade66627",
+      "contextHash": "8a67432118addfe2b4a8de21e454a3f84f7aa34bec6c31c61c3f05976c9d1823"
+    },
+    "ctgov:NCT06339593": {
+      "reviewedSourceVersion": "c93aca2cc1abdeaaa83247461f1ef1d4cf22d0882b0183e48dc265802a07e583",
+      "contextHash": "d639e458f5ed5a9abbedcd77824b14e029cb22ebfe9fcfeabfc0a7debb25acaa"
+    },
+    "ctgov:NCT05359991": {
+      "reviewedSourceVersion": "99dbcf9ef6c02a19100d7b691287c2c70dfe77344f1eb98ac91626d5b1ff702a",
+      "contextHash": "75e39511c76a5b96c627175b5865e4e2cd23405568e3d0e3e96e4d719326176c"
+    },
+    "ctgov:NCT06322446": {
+      "reviewedSourceVersion": "5f838e43a686fc3e43e58967134d8bcb38c1e6428c75df0fd1d602f5109b57f1",
+      "contextHash": "97c1828674d9f936458c8d53d4aee1a03a4561e35098a7762250578b8bc6eb28"
+    },
+    "ctgov:NCT04530383": {
+      "reviewedSourceVersion": "15e28c8b31d0f0e8efd0fab4fb22591d57c2892aa3a677bcc53dea482e8a5e4f",
+      "contextHash": "fc749dae599472e32d9f68c792aeff10eb8cb59911ce0a973d367a1d8fdaf734"
+    },
+    "ctgov:NCT07508904": {
+      "reviewedSourceVersion": "79ac277a38373c2c393a7bd9a10a909027074c8949627cdadd1e6cdeced37125",
+      "contextHash": "e88c9c883b1f9007da6e20e7eb538a27856a2e2faea6b3b1730b5b9fd94145eb"
+    },
+    "ctgov:NCT06663176": {
+      "reviewedSourceVersion": "b90acaaa63ae50bca29ec1596589236e7e46877eedf55b1ed43e556c7eaf6a46",
+      "contextHash": "5bb6ddb7bf239c01d076f5716863c5fdcee99a7145938065f1f81210d2a4002b"
+    },
+    "ctgov:NCT04467957": {
+      "reviewedSourceVersion": "770472f9729b0ce95e44cd983102608ce1248c14965e72e7763408e9be8fa34f",
+      "contextHash": "dcc50f04d5b0e2d2d9d440aed8a0b027a2e7bd56c8a796ee34c454c679c2f36c"
+    },
+    "ctgov:NCT01851694": {
+      "reviewedSourceVersion": "246d2d24dc9611ee88f59a3c1a19c6c53175f022ae4abc02bc41fd0054a32eb8",
+      "contextHash": "daf23d2f0e201c9974526a41f9464e0f09e81a24e1ba46baab5a85adfd93bc46"
+    },
+    "ctgov:NCT04580368": {
+      "reviewedSourceVersion": "6a5b3ce549d4291c1106d2a618a1f7e9c5a40ffb5997a3df4bbf2f4ad47b8d63",
+      "contextHash": "4d033dbbdd79bdce54481569d5ad91a3c11e2bdd7cefc6257fd1d0213898f861"
+    },
+    "ctgov:NCT06617013": {
+      "reviewedSourceVersion": "89986e27d7c02db287170b3442d8a534c72fc5588576e7d03c94b94d2c705530",
+      "contextHash": "5c2bce82f09ba3fa3371e76a5bc6b34ad747126217f85233429f7137cdc26609"
+    },
+    "ctgov:NCT07289035": {
+      "reviewedSourceVersion": "356904b0a33efff70c8fc022e131019d04791eff82a3969185ce5b1f7bd70c07",
+      "contextHash": "af5bc92c46b99ba4701318b3ea00156fe04341d11f395f82796cb237ef6f9eba"
+    },
+    "ctgov:NCT06996951": {
+      "reviewedSourceVersion": "1ae4dc286fa1027f5f95247639b2efb0815f46e403b5d3f892833623d3c6ff44",
+      "contextHash": "6d12686e19944e6d36f1c5e92c1a3eb298b51862c6855888d63d6d29e277675b"
+    },
+    "ctgov:NCT07280598": {
+      "reviewedSourceVersion": "c91844b44e9115f263f8d481b31290356abafe6cb0812075a83aa5b902e3fe6c",
+      "contextHash": "45860118b01ff671b2dd5d02ae190c08006981f36b4f2971ccdd7faa0019c2a2"
+    },
+    "ctgov:NCT07274020": {
+      "reviewedSourceVersion": "3280d4aa8598c9dc820bade7a261a66254a2fdd5b67a1ddcad318e9df69e1306",
+      "contextHash": "bb1659895157b4f30b510e4e2f4af443148a1c0789810143863c1447a897048e"
+    },
+    "ctgov:NCT06457451": {
+      "reviewedSourceVersion": "558db98234d8a75f9517f46e9a90d759c11fe3fd15d934ab6a7dfabf5215d1dd",
+      "contextHash": "c3b896378177ff91604d31b1687e86c99cbd1409186226fc9d8c1a4af7845159"
+    },
+    "ctgov:NCT06242795": {
+      "reviewedSourceVersion": "755c3ca07d927e083e6446d5de4c6e9e76848aa18fa75826a0d460b701e4905e",
+      "contextHash": "81db95bf38e34e2100990e582176028bd6489ae9a84c37271f1a4fa65b3b196b"
+    },
+    "ctgov:NCT06998043": {
+      "reviewedSourceVersion": "02ed9d34909d8f4493236ae8479864444601a515466e78e981b7c398459638e2",
+      "contextHash": "09c16316d31b33adaf50288e915a4970636656b791e60e8892d41898d50776d7"
+    },
+    "ctgov:NCT07062939": {
+      "reviewedSourceVersion": "16eb05f279ef2094fa929434adc93e435704ff6aabf9a16641b554db9b9f5d30",
+      "contextHash": "44029da258b60969ea0b2216b8f8f91d15bd772788eb0e21042e3a7785bebf08"
+    },
+    "ctgov:NCT06958094": {
+      "reviewedSourceVersion": "efc5d6fc79ab3e74d534b3ba000192ba2a4259b849c9b95ba21f15b76145d11d",
+      "contextHash": "a03a1adc68332472bc847efa087ff8b442e9f09b963397fd2b575b6dc5b95f0c"
+    },
+    "ctgov:NCT06364176": {
+      "reviewedSourceVersion": "c8be2183ecbb25e943b6111ec9258e09df5c70faf3ca53a3260b886c0b1da9ee",
+      "contextHash": "b0d95e384a2917f6301f03f820e40ed1d12c942ede12b3aba08c9c237fdf2fa9"
+    },
+    "ctgov:NCT05802264": {
+      "reviewedSourceVersion": "20511db937e79b38c112d6467f57b9993d86fe1e3721e43ce591f522dcc19193",
+      "contextHash": "f0b76734a1f3ca23b84960661ff60b51d33363cfebd2e73f820ced94f9e517f7"
+    },
+    "ctgov:NCT02690064": {
+      "reviewedSourceVersion": "13c83a3eb6e60669482b45c4be3ed7981e13bee0df2d5db7f066d22049b6c6e2",
+      "contextHash": "ef4ebb4132a20b6859a59169cb0132e07ae13b522803d320e86434b5279d2204"
+    },
+    "ctgov:NCT06526923": {
+      "reviewedSourceVersion": "9882809d44631acddebdd5b45e3319ca4aa511bafd426af15a4b6054ccbbe98b",
+      "contextHash": "5d96d2769c4d0ba3a0cf6c01048e7fbc4073a37c647022315bd92baf268c0a5a"
+    },
+    "ctgov:NCT06284577": {
+      "reviewedSourceVersion": "e563852ef06d8f7fce1ff1990f9e3e7d1ac67aaea93b2e086feebb92fb606cb3",
+      "contextHash": "e6fd61922fe61d9b242ec2284a55de097f7d56ac7370d9e3d69594330b9961ad"
+    },
+    "ctgov:NCT07559175": {
+      "reviewedSourceVersion": "a0e168017fe8adec40109695a152a94c86712c33f5e343b28fefc8997854cc37",
+      "contextHash": "92996cf4c2ecd650c6e65ec295a0cd2cf0b63a87215b453e8e425543cc3d30e2"
+    },
+    "ctgov:NCT07608328": {
+      "reviewedSourceVersion": "57ef238c0e33a98983d331f89ad99ecfb349fd12ba7a005648e411220b6c1e79",
+      "contextHash": "452a6284bdd1c253f13adb905c023dcaba704b02016fe36b19d3d2a8c92d72b8"
+    },
+    "ctgov:NCT05548283": {
+      "reviewedSourceVersion": "b0b57050d8f3bf8de2bfa666be55b3c574e9af98384dc26f6965ed19bc7faa6e",
+      "contextHash": "2a7b910982b92b655755952689d58989fd62ec72cf335e2cc2daab2867d0674a"
+    },
+    "ctgov:NCT06487273": {
+      "reviewedSourceVersion": "9c3d95475801d56631eb768bbdf4bf8910ece288f0d79de400b729e5f31c9812",
+      "contextHash": "3e0fdbbc808e3d232fce5a4ecb275909729330f5ce9cebdbc65739776374f0b0"
+    },
+    "ctgov:NCT07148739": {
+      "reviewedSourceVersion": "fbd9511ee986aa9c0fb98964fa59b8e361215a30789ae75432a55caec02c11fe",
+      "contextHash": "10ccefd97d877cb64573636b54100a81c25936756ed79570599c4b88505b669e"
+    },
+    "ctgov:NCT06413368": {
+      "reviewedSourceVersion": "9f9f46ef1559126549370ac65c807f2be3aa8a96975127c6afaf86d01f2bd88c",
+      "contextHash": "9e9a3d8fead32bae511817b6c94eb65b0731438277747daf93fa3396f570b56c"
+    },
+    "ctgov:NCT07436351": {
+      "reviewedSourceVersion": "01fa5cf1e23d953568fa49fa9a2b1625096aa8be0c9e6df3353b962110b416fc",
+      "contextHash": "a37ab82966dcc9e2a4a1eb16c1765efc395d00a792b083bd3747cbabc543d3e3"
+    },
+    "ctgov:NCT05818319": {
+      "reviewedSourceVersion": "dbdfbef9dfff0344717117c5dd5a7a1a996091b5b8f2ccb4e43b0018c0d1864e",
+      "contextHash": "ee20216ca0cd7d0f81aabb01bbfa64790ed7e14b69c89805f2d7af295f1a9460"
+    },
+    "isrctn:ISRCTN57413769": {
+      "reviewedSourceVersion": "f1c153bb4de31c4b54e69927ebe590799126f571ab122b8c333797932f55c0d7",
+      "contextHash": "fe87d6320baee76270746561f607454e05e272986c731abc8ddbbcc4af5e210a"
+    },
+    "isrctn:ISRCTN96750019": {
+      "reviewedSourceVersion": "27ef52b42e8b61a743b1bc231861fe71734c4788d7f4c3259c290db37273ec74",
+      "contextHash": "888a5e0aba6964166f3c68d3686309ad7896bafd14530e6b4aafa478c7c53dd9"
+    },
+    "isrctn:ISRCTN11798668": {
+      "reviewedSourceVersion": "4be3f7bb3b8fab356bb710ffc22fe12b2bb8502c9c45862f05a5abd028e715bb",
+      "contextHash": "8fa37408094ef4b8f1443f0bf7694690904cafd6d9ea4a44d9fdd79c7a16cbfb"
+    },
+    "isrctn:ISRCTN27664426": {
+      "reviewedSourceVersion": "716b03769e4c1b4c3252979038bebb943f188cd921d0a5e8d1dd756621c47af0",
+      "contextHash": "9173f47c57a48de03ef334ebd3481497d2edaeb085948d10752f1971fbff9ed7"
+    },
+    "isrctn:ISRCTN86523335": {
+      "reviewedSourceVersion": "4880b1202bc9fd65d356c014a1a978f7cb2e009bf2aff510835febfe28c4b3c6",
+      "contextHash": "c74f995dc6693de647b2894dfe78b4b021481348506eb9f209476793e0ae26b3"
+    },
+    "isrctn:ISRCTN30841680": {
+      "reviewedSourceVersion": "aa677c2343d99fd5bd7972a1d4fced45e757fdb7a84ef6436fefa5f7402271d1",
+      "contextHash": "878e41e4b30f927dc50d17c01622d66262856073245d76c9d2d69df5d48c0067"
+    },
+    "isrctn:ISRCTN17978477": {
+      "reviewedSourceVersion": "2c2eacef73ed4b4e79271c0397f4482b7c89c8cbe33806941a50ff98d378586e",
+      "contextHash": "65d19203d565b18eb4f43216fc5d65a2b6ba952ccbd0ceb344b1563b38bff12b"
+    },
+    "isrctn:ISRCTN53454974": {
+      "reviewedSourceVersion": "d983327599e3ee84f7d89c98b57069583b026f53d2ddb43eb98276a65b777caa",
+      "contextHash": "d554291985becafe651232a496d5db22f2f677773748e8cc14bba6d4c1257a2d"
+    },
+    "isrctn:ISRCTN53323164": {
+      "reviewedSourceVersion": "36f812c44ac5e3e988eade394aef97166964cd017f781f706e029dcfbddf2078",
+      "contextHash": "dd200c4303f895e12e51a0dad83d1be3a698b8b16d61bd6423d01770718596dc"
+    },
+    "isrctn:ISRCTN92573472": {
+      "reviewedSourceVersion": "2fc17715d4fedf8ee50bdd6336146b05d14dbac252162d79ae97dfd3a3b850ed",
+      "contextHash": "ec2b625fe72290dc2d86409ed5247f34ad2e7acaec75030c98a305abcf137ee5"
+    },
+    "isrctn:ISRCTN13864650": {
+      "reviewedSourceVersion": "3bca95bf9b8bb4ae0d526d64736bfe2f8570605e31a8b4ad9f32c8b833d2c8f1",
+      "contextHash": "1ee068a827eb15c3732c0aee31696f2ef3c410ecc89ace23069e50cb3f504e2b"
+    },
+    "isrctn:ISRCTN11161411": {
+      "reviewedSourceVersion": "d5cb3fc606b4010471f1021c99a0b8232857085417f3729741778ea811662ced",
+      "contextHash": "e0ebe210d9e36d4f93add3c5bb6e824598b438e92b1fe88d6dc6bb86f0006c33"
+    },
+    "isrctn:ISRCTN51624752": {
+      "reviewedSourceVersion": "7cad183ff3130e3e1b8bf2535f2af3d85bad89879e362cbaa0d32b23518789dc",
+      "contextHash": "c67e30965bca21d323555c7e010802ffe096ae2d31d3e96c68b5265a396edced"
+    },
+    "isrctn:ISRCTN28176442": {
+      "reviewedSourceVersion": "e3c04813246ae1c4e3d3f29888aea018dc6e09e27cae536731b4a5478e5f31a8",
+      "contextHash": "2004df379aef8291baaa870619433177425dca4275e31b15e62fba99368d4716"
+    },
+    "isrctn:ISRCTN10838115": {
+      "reviewedSourceVersion": "3a05d0b5ac6c77fcccfba4c2fd9cad25b82db70f27d03bb478b8579b2fe365ca",
+      "contextHash": "118ec3c6bd790c9e5a62390ab515b73f3a93c74cdd4a38e5cd9a3f5233af21be"
+    },
+    "isrctn:ISRCTN12473810": {
+      "reviewedSourceVersion": "5bb886c83954eb6edca8ebf4894ae137a24d353c03abc4cde58984593f78fc43",
+      "contextHash": "6d445e699bb87faa35273d0793195344b9c8b96e273e9a792bce7e444c8850dd"
+    },
+    "isrctn:ISRCTN18130649": {
+      "reviewedSourceVersion": "1c87f935a72c489fb009899fad15fd5b99e05fc637bba7eee38b847063491383",
+      "contextHash": "94a191e9e4f5dd0c38b159aaf8c6ffcbb002cb4885e1ca26a036fc7fd198d727"
+    },
+    "isrctn:ISRCTN11220163": {
+      "reviewedSourceVersion": "550abf92da405f9342c1bda20ef6a6dc57e161a4c8c5bab2872f31e619a2087b",
+      "contextHash": "00e5cf34168f3125e5c4c6062593974c2636a8c829650781b0fe18036cb85f54"
+    },
+    "isrctn:ISRCTN13083896": {
+      "reviewedSourceVersion": "11be9c91d8346de4fd0a29995c79de2b55ae66216956c220fd714c60de4e956d",
+      "contextHash": "458a68892f869b15dcdd366f3423647975154b7c1ecbffda17a824490a16e34e"
+    },
+    "isrctn:ISRCTN13412080": {
+      "reviewedSourceVersion": "37615492d52a6346fd48afca823db32e3159f08286b699437b52a087adba7841",
+      "contextHash": "57252d395e7187ba0835fcae7eab6174b3f22f0357de1712dbbabed4d9a89b8a"
+    },
+    "isrctn:ISRCTN13076797": {
+      "reviewedSourceVersion": "644628ebaada8be27d545b677cb0ee2c104a004f07277b6b5a06bd864e852540",
+      "contextHash": "a094504fcfb5636806f2105704e9d148fd9d9ce3018969162190985f388367e5"
+    },
+    "isrctn:ISRCTN37959826": {
+      "reviewedSourceVersion": "fe5ba8b7766e5bf0fbdd26284287408b5566fece98be6913dbb66f5fb4af0468",
+      "contextHash": "06b833e14695b43891b79414b804dd8e849c778b1381fb3b6b392a60436067a8"
+    },
+    "isrctn:ISRCTN26104255": {
+      "reviewedSourceVersion": "2570558592a4e8f708a45fdeee79fa0768d44348e17e94b4b83b03c5a7e20b62",
+      "contextHash": "4b054b110105941e3c836c081613a534199e2d0a7ce57801bb8c0b10ab9a01da"
+    },
+    "isrctn:ISRCTN69078742": {
+      "reviewedSourceVersion": "e21f809fa34718d32c5e35c9fd40b49fcad3183192baeff60329820aff5211e3",
+      "contextHash": "fcb3d99484af20c98c6c3ad3d7433eb12fb17a7d22b965167533007a603e2d7f"
+    },
+    "isrctn:ISRCTN75391385": {
+      "reviewedSourceVersion": "953669293ab4265aeaa4412564e15021597a59a119e80deaa3099c71021e2b99",
+      "contextHash": "96cb1efd53e05dbc730b1b30fdb1a0832a6584f7d0bdc3524276135fab907f7c"
+    },
+    "isrctn:ISRCTN71164341": {
+      "reviewedSourceVersion": "da9a80725515a416ef1a1688a4363eed09917e62665cbee5b7c3e16b427a8218",
+      "contextHash": "3edcdbc23de5d36ed9efb5046ae4ad96fba8f0b7ce9e9048115e1c85c4d6f903"
+    },
+    "isrctn:ISRCTN65617839": {
+      "reviewedSourceVersion": "f3d59a90dfa59364902e0471c0e384a04d0f2c585dd75b4ad5d098c7e61dd970",
+      "contextHash": "a38f6e21c7f36fa060e255bd32c04da1b7ba073132430df9b1035278f53d31ad"
+    },
+    "isrctn:ISRCTN49790596": {
+      "reviewedSourceVersion": "8d904bf87fddb8552edf02eefcaa5f95dac3c92c0ebeef8fca8fc2ad14ed4871",
+      "contextHash": "f9b6f9f251dff3c669d0b8d94989d08c21b139e09d7c27d7867bfe322a01eddd"
+    },
+    "isrctn:ISRCTN78613729": {
+      "reviewedSourceVersion": "05b0de6f742ff2a82560ada42162f58ad74db84e55200d40d3b2312d20803fef",
+      "contextHash": "6ac2f35b24abbb834a03b87ca277142a2696ef524b2fad9e8807bbdb3e9edc3f"
+    },
+    "isrctn:ISRCTN14200211": {
+      "reviewedSourceVersion": "79ae4fb3f6768ba4146764a065d94d4bff18793ff6baded3a3543f62fc8369a8",
+      "contextHash": "5de88d43693d41faefabff4054eae9ef0f540d3fbbaa0b959e4eab4a4e60a8d3"
+    },
+    "isrctn:ISRCTN22534872": {
+      "reviewedSourceVersion": "372ebd735bf8e2dec373e9194cdfe944ee7d7742106ccfd73df6d8206813afad",
+      "contextHash": "f6bc143b5a40f7eabea8c69437d0cd6e4dc51202b7446ad8d24dfcfd9e486123"
+    },
+    "isrctn:ISRCTN90285133": {
+      "reviewedSourceVersion": "652cc0c12d7e74e2fc7e03e6f2a34f3e61290d1fde87051921fdb70cb11ecbf5",
+      "contextHash": "d3f68c1c9ddefdefc057b4d2850fa5c53bb62e37f29ad89cc36676d122c36e44"
+    },
+    "isrctn:ISRCTN16158695": {
+      "reviewedSourceVersion": "f979675e60b585aba0dcd8fb83be05a065dfcd04ee5c978444763f4edf938d59",
+      "contextHash": "efc948eca417c5aee80e44090c36b2005e6c8d527f714bca1bf523e502a64591"
+    },
+    "isrctn:ISRCTN21133397": {
+      "reviewedSourceVersion": "39bea5f0607965b40f0ce9842c635cc03517b1017f974e4e87dfa83389af7df6",
+      "contextHash": "82b4b7e298b574a82073b6aa26aac52fb7f961c1eca318d8e554816aaeb32350"
+    },
+    "isrctn:ISRCTN64225851": {
+      "reviewedSourceVersion": "caba69d439ffbf1d569a8fbffd1b66e05884a5ab595dfea8a5e37e24b3f90b08",
+      "contextHash": "080b30f72e605a4d0c37fa1e630b39dbfdae6d210e4b8db927ec5a4bf89c3c3f"
+    },
+    "isrctn:ISRCTN98785888": {
+      "reviewedSourceVersion": "3d8eae9a88a63f041a1a615ef10385e397c079326c70e78d4bc4b2f439aa43af",
+      "contextHash": "4e8b327b52dcce9a6d1bcd002f0881683dc69eea27fa69116d573d7bed65f765"
+    },
+    "isrctn:ISRCTN50584238": {
+      "reviewedSourceVersion": "096e6e90445dbf83f5710b6c06e4a05a730480ee18b758f6dc6d68bbe48aa405",
+      "contextHash": "4a2e065bde18f152915c753c26dfee1e1578e27fc9b0a9f803caa1f32754ba9e"
+    },
+    "isrctn:ISRCTN74815264": {
+      "reviewedSourceVersion": "2d26ae7f9f0b610b61ee9191950263e54b1c59a8981e68f6a9207295e0acea66",
+      "contextHash": "9fdafa7e3ea2f3e6572363e834096fbb98d8f4c0ab4f59068cba315d88350bf6"
+    },
+    "isrctn:ISRCTN87248226": {
+      "reviewedSourceVersion": "f4ba8cdef398bb4c02513a5f59ae32cf6061aee14d94d246af151bf6679bec72",
+      "contextHash": "31f63c9dfae89e30ba4638c76a76d19a0c16ecb4af5b8ebf86dec5452fff068b"
+    },
+    "isrctn:ISRCTN11604593": {
+      "reviewedSourceVersion": "bb5db5d98c67701bdac615345301015571def6030afeb19be3b5978f255254ff",
+      "contextHash": "c5401f849e3891480c19d8b621611ff9431169f6203a780f264070a9a68095f9"
+    },
+    "isrctn:ISRCTN03484127": {
+      "reviewedSourceVersion": "db472b5ac218161f2b39042d34eb647a61714be95162cf1051542ae6122336c1",
+      "contextHash": "50810b79742fb3e55b93b60b4853b14252e33ac085dd075368961147cbc48186"
+    },
+    "isrctn:ISRCTN36453336": {
+      "reviewedSourceVersion": "f1e5f77c7f00d8f84c6b0d8b2033ca835b788f0d21cd205511d9f9b53b024986",
+      "contextHash": "f68ab77b2b450a84b0186c5727b818c057d3a0c33089b904700015040c79d154"
+    },
+    "isrctn:ISRCTN95744468": {
+      "reviewedSourceVersion": "d9595c603fccc8de439f953fad971f658672a0ef9a157e89fff8eb9d675f4a00",
+      "contextHash": "7c7ef3c597055bebab6ef45a62e60976972a1e769b8835f48a29432d112eac18"
+    },
+    "isrctn:ISRCTN60187870": {
+      "reviewedSourceVersion": "ccbafe4957c5b6f333ce3fbc725ecbd96be11acfc07cbb2bb74a4763a6891d58",
+      "contextHash": "ebe1d7c54b50a138d4d1aefe884ffb05f1011946217dbc1c5adb600d47eb46fa"
+    },
+    "isrctn:ISRCTN86935165": {
+      "reviewedSourceVersion": "dea13a56383de3f7f9744d98f403b89c4b7ca30177f1410f2d5cb7353a04ce48",
+      "contextHash": "d0256af35677d57e9b5ee0b8de94a1d0d008a1af0ddaf5f62ef3a59f131b76a4"
+    },
+    "isrctn:ISRCTN61821827": {
+      "reviewedSourceVersion": "2ab60352a5e806f7ff7881e9e7de6028c2123c7b48a2ae7da7e109796160ff14",
+      "contextHash": "c35054c8125c35e594b20e869e53bc4f2d42a0036e72ebbeeedb7748939effc0"
+    },
+    "isrctn:ISRCTN67578749": {
+      "reviewedSourceVersion": "8d88610474365bb8c619743de78de75c9219cf459c3a619c1b30b644789506be",
+      "contextHash": "ecabc808f3f62b774ac0958c076a24b84cb37e576e690f8119fe931eed61b5d8"
+    },
+    "ctgov:NCT07805174": {
+      "reviewedSourceVersion": "f717ce79407b7ee021f518feec6a2f494da428a8980e91a21c3c03d882a6135f",
+      "contextHash": "11cbb26486054a3f0026c9f10ef2f00c40bf59b63e441d3e94fe66de58c49491"
+    },
+    "ctgov:NCT07722364": {
+      "reviewedSourceVersion": "dd6c80cfa2c592bc51d4f533376fc8dfd8971c5909b81b1863401352d84a2afb",
+      "contextHash": "e4fe55f9e2db1e10529b347cd658a191e57cb3efe0bd54a3f2ae340419b021fc"
+    },
+    "ctgov:NCT06616857": {
+      "reviewedSourceVersion": "3ec929e829b754731872b6001a458271d5b5f9bc94d11ca03e182f7523b7ac3f",
+      "contextHash": "7f4fcf7931697649c4ae79c3bfc263d037a5bd7f14bf3e04eb69d1defafc97b9"
+    },
+    "ctgov:NCT06429176": {
+      "reviewedSourceVersion": "5bfba58fc3d1889a55d2b34db84e965ce91ba7ac905f54f6ade188d61981cc06",
+      "contextHash": "5e67b36871f6925191b9ae958b8b4994aa8f27702847ec3f09e1d50482b33d11"
+    },
+    "ctgov:NCT02740868": {
+      "reviewedSourceVersion": "befce56c7d26f75c9890a0e19da5d9941c43890f0e9789b0c80550c8ab2d7056",
+      "contextHash": "74b708a89c322b93a351df06bd6a0d6755fd6a66e922e5796ec5d3af726cf2a2"
+    },
+    "ctgov:NCT05562492": {
+      "reviewedSourceVersion": "110572adc451822722e99c4a7497ec7a7f83a2586d939b8a2eede7c5f309e24e",
+      "contextHash": "a47e316e41aa0bcd76be0c901c6c00aba741ac4275a3b5174d28a75bf2dcec6b"
+    },
+    "ctgov:NCT05998629": {
+      "reviewedSourceVersion": "958c6c69d14536a7ba3835a4d9f0a781daa4488af967eaedf8849c8809cc0a65",
+      "contextHash": "3e0caf8e3c90cd4241879619a0d8ba18312984a4393a21bdcf56008c09f2c940"
+    },
+    "ctgov:NCT06120465": {
+      "reviewedSourceVersion": "c0023d961060e60b0e5307548e026feef20faeb7b6d5ade2ace78d96a1907f6f",
+      "contextHash": "88ac7785bf8290efe32612e0baaedf87bef17b33c631ec4962b1e2f8db366157"
+    },
+    "ctgov:NCT07027553": {
+      "reviewedSourceVersion": "f4329188fc48bc7717de1eeb14fb6a587671231529d4f549f97dce04d83d4ae7",
+      "contextHash": "257b8a8ccf396819e5b60662399d61a403695afb4aecc245729cbe5fa25fe9c6"
+    },
+    "ctis:2022-503081-74-00": {
+      "reviewedSourceVersion": "da29032195c342899438f5dcbb914102d8187d92ad5d7f2ee3bb9089fb0ed2f1",
+      "contextHash": "d0e334c12ea098f664f7b156d17727a204bb84a509b35600be0da5ee940babf0"
+    },
+    "ctis:2024-513754-29-00": {
+      "reviewedSourceVersion": "2be12e49da1f41333b19a17c217e74f7bfabebe8f2e3360849818badf2191210",
+      "contextHash": "79ff4f3fdf702020ee226ff5ce18710d369f825ac55eb3ad4e84a17504963c62"
+    },
+    "ctis:2024-514173-22-00": {
+      "reviewedSourceVersion": "19f1e7999765559ef0e66e80f3ddfb70585414a87998bf0d8d1b461b0ad2f8fe",
+      "contextHash": "1ca055b4efaf79602ff1df1c942cf0ea9f4a7ca955c90c419721ab04f1f38ec0"
+    },
+    "ctgov:NCT07048262": {
+      "reviewedSourceVersion": "9fc1d6e2e34b2aa8f2722f35e3acf49933a8c88e1559228c8490f210748041eb",
+      "contextHash": "ac9d61344c01624408c1dfb9e74aadff688d8acdbda40b26dea53adc08048311"
+    },
+    "ctgov:NCT07376187": {
+      "reviewedSourceVersion": "f8a4d55771a43cff8d4859251bd2851cfdddad5040236698df157bbda10044f8",
+      "contextHash": "1d0ac2fd2366f899f20df0a2d38055b8b60466116571985b00b7ae040ee2af2e"
+    },
+    "ctgov:NCT05860803": {
+      "reviewedSourceVersion": "e7f694bb4fc0880a4d632e576c3733291879cb0fa09d6875c3f4c7eed951203b",
+      "contextHash": "35428698854d2c5f5dffc4aa6a6efe7860a6128c3182430317f156593c52059b"
+    },
+    "ctis:2026-526670-16-00": {
+      "reviewedSourceVersion": "04b1e8928008072d7ec4795afece6abb1b583b709334e4750cfca1031e41f057",
+      "contextHash": "380f6f7fad5a6942f20d334bc85e87f76b4424927fa744d67d3a53bf6dabe160"
+    },
+    "ctis:2025-524324-22-00": {
+      "reviewedSourceVersion": "e5fa9219870d10353a6f305c883c1b2488fb37c20c1fcacc266e2ff938b69179",
+      "contextHash": "74f61a530267cf8620e9685c783ccc5097b88b008df51dfaf0ddc1144aec9f96"
+    },
+    "ctis:2025-521493-33-00": {
+      "reviewedSourceVersion": "05e6d6ef33e42b03959b9852e5de104a1e3079a019d3b7e3f8a9fa59671e4c69",
+      "contextHash": "6bfc3125646fa54e3472477f142e1299531e621f48cbbb9ae6c6c948d66a9238"
+    },
+    "ctis:2024-518821-13-00": {
+      "reviewedSourceVersion": "f24d2a4caeb7daea400248c86c9987c57739c68384530081e685910906e339e1",
+      "contextHash": "6ce3b31a19a907d4ff01342080c18929098a93773c2e1d8363a625d901bdb660"
+    },
+    "ctis:2024-514845-12-00": {
+      "reviewedSourceVersion": "a512251687057dae51ed468476aec430371b9d21689d1f3b2f0c8d7178dacfb4",
+      "contextHash": "4dfe6763367f20e20b203c61429b6a4e21455d74248ff5e94bffed5ed98f3c79"
+    }
+  }
+}
