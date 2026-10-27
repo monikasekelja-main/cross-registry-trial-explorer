@@ -65,10 +65,12 @@ export class EvidenceService {
       }
     }
     const candidates = [...new Map(molecules.map(m => {
-      const id = chemblId(m.molecule_hierarchy?.parent_chembl_id ?? m.molecule_chembl_id);
+      // Isotopically labelled drugs can share a hierarchy parent but remain distinct medicines.
+      const isotope = /\/i/.test(m.molecule_structures?.standard_inchi ?? '') || /\[\d+[A-Za-z]/.test(m.molecule_structures?.canonical_smiles ?? '');
+      const id = chemblId(isotope ? m.molecule_chembl_id : m.molecule_hierarchy?.parent_chembl_id ?? m.molecule_chembl_id);
       return [id, { id, name: m.pref_name ?? name, matchedFormId: m.molecule_chembl_id, moleculeType: m.molecule_type ?? null, structureType: m.structure_type ?? null, sourceUrl: `https://www.ebi.ac.uk/chembl/explore/compound/${id}` }];
     })).values()];
-    return { query: name, status: candidates.length === 1 && candidates[0].structureType !== 'MIX' ? 'resolved' : candidates.length ? 'ambiguous' : 'unresolved', candidates, evidence, method: 'exact preferred name or exact source synonym; salt forms grouped by parent ID' };
+    return { query: name, status: candidates.length === 1 && candidates[0].structureType !== 'MIX' ? 'resolved' : candidates.length ? 'ambiguous' : 'unresolved', candidates, evidence, method: 'exact preferred name or exact source synonym; salt forms grouped by parent ID; explicit isotopic structures retained' };
   }
   async targets(id, options) {
     chemblId(id);

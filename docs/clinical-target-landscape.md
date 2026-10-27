@@ -140,3 +140,15 @@ CLI equivalent:
 ```sh
 node src/landscape-cli.mjs run --disease "cystic fibrosis" --view ongoing --collectAllCtgov --enrichAllInterventions
 ```
+
+### Reviewed CF overlay
+
+`data/cf-intervention-review.json` records an AI-assisted evidence review of the expanded CF snapshot. It covers every unresolved or ambiguous name, previously identified drugs lacking curated mechanisms, and the incorrect parent grouping of deutivacaftor. Evidence includes exact stored registry versions, product labeling, primary research and sponsor sources. Drug-wide pharmacology does not establish disease-specific clinical activity.
+
+Run `node scripts/review-cf-landscape.mjs SNAPSHOT.json --db PATH --out DIRECTORY`. The script refuses mismatched snapshot IDs/content hashes, changed registration versions, duplicate decisions and missing decisions. Additional canonical identities and mechanisms use the existing evidence cache and bounded HTTP client; incomplete target-service responses fail visibly. It writes an overlay without modifying the source snapshot or changing MCP landscape semantics. The original collection coverage and the reviewed retained-registration count are reported separately.
+
+Review outputs include the target/drug/trial evidence CSV, a complete decision audit, excluded registrations with reasons and a JSON containing all review data and a review-content hash. Local `reviewed:` identifiers denote curated concepts, not database accessions. Gene delivery, mRNA replacement, splice correction, indirect expression, protein interactions, nucleic-acid substrates, organism-directed therapy and mechanisms without a unique molecular target remain distinct. Multi-ingredient alternatives do not become aliases of one molecule.
+
+The review excludes 25 non-CF bronchiectasis registrations and the pGM169/GL67A registration whose linked EU results establish completion in 2014. SP-101 remains flagged because external development-status evidence conflicts with registry/sponsor descriptions. Other registry statuses have not undergone a full independent currency audit. Experimental-arm membership and registration phase still do not establish a drug-specific phase in CF patients; the overlay makes no new confirmed-program claims.
+
+The ledger is snapshot-specific, not a universal synonym dictionary. Start a new ledger version after reviewing new source versions; do not carry these decisions to an arbitrary new snapshot. This is not independent clinical expert validation.

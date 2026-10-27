@@ -120,6 +120,16 @@ Saved-record search accepts the same filters, using classifications stored at im
 
 For drugs, sponsors, trial IDs, or a broad search across other fields, explicitly choose `"searchMode": "keyword"`. Registry query expressions also belong in keyword mode. Condition mode uses a literal condition phrase on ClinicalTrials.gov; there is no automatic synonym expansion or switch to broad search when nothing matches. Each response includes the mode and the exact criteria sent to each registry.
 
+### Reviewed CF evidence export
+
+The CF review ledger adds source-backed identities and mechanisms to the 27 October snapshot, including gene/RNA therapies and multi-ingredient regimens. It separates non-CF trials, completed trials, diagnostic agents and drug classes. Every decision is pinned to the original registration version.
+
+```sh
+node scripts/review-cf-landscape.mjs PATH_TO_SNAPSHOT.json --db .data/landscape-live.sqlite --out .data/exports
+```
+
+This creates a new reviewed JSON, evidence CSV, intervention-review CSV and exclusion CSV. It preserves the original snapshot. The ledger applies only to its recorded snapshot; it is not automatically applied to new MCP jobs. Unknown targets remain blank, and registry phases/statuses require clinical review. See [the review workflow](docs/clinical-target-landscape.md#reviewed-cf-overlay).
+
 ## Understand the results
 
 - **These are limited search results.** The app does not download any registry in full.

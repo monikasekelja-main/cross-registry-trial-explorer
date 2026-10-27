@@ -211,3 +211,11 @@ test('full landscape modes override only CT.gov sampling and attempt every inter
   const job=await finished(service,service.start({disease:'cystic fibrosis',sources:['ctgov'],limitPerSource:1,maxInterventions:1,collectAllCtgov:true,enrichAllInterventions:true}).jobId);
   assert.equal(allFlag,true);assert.equal(job.coverage.ctgovComplete,true);assert.equal(job.coverage.omittedInterventionNames.length,0);assert.equal(job.coverage.allInterventionNamesAttempted,true);assert.equal(job.progress.interventionsCompleted,3);
 });
+
+test('deuterated drug identity is retained rather than collapsed to its non-isotopic parent', async t => {
+  const store = new Store(':memory:'); t.after(() => store.close());
+  const isotope = { ...molecule, molecule_chembl_id: 'CHEMBL4297603', pref_name: 'DEUTIVACAFTOR', molecule_structures: { standard_inchi: 'InChI=1S/fixture/i1D3' } };
+  const evidence = new EvidenceService(store, { chembl: { json: async () => ({ molecules: [isotope], page_meta: { next: null } }) } });
+  const resolved = await evidence.resolve('deutivacaftor');
+  assert.equal(resolved.status, 'resolved'); assert.equal(resolved.candidates[0].id, 'CHEMBL4297603');
+});
