@@ -1,0 +1,82 @@
+{
+  "version": "2026-10-28.1",
+  "baseVersion": "2026-10-27.1",
+  "reviewedAt": "2026-10-28",
+  "scope": "VX-581 only. All other decisions retain their original review dates and scope. Original snapshot overlay ledger remains unchanged.",
+  "items": [
+    {
+      "nameHash": "30a13dd777c322c1482fc7837676cae1842237ca0a6e62e325b91ab92e90ae31",
+      "namePreview": "vx-581",
+      "previousOutcome": "unresolved",
+      "registrations": [
+        {
+          "id": "ctgov:NCT07283770",
+          "versionHash": "ba98fcee999f55516d1b6db934690511b0edb13b24580e76e7749665b3c9e345",
+          "url": "https://clinicaltrials.gov/study/NCT07283770"
+        },
+        {
+          "id": "ctgov:NCT07813039",
+          "versionHash": "3b8b82ebe7babc1f606216cdcc35fd99bde5431e7dc8c78a9717b25038f42fbc",
+          "url": "https://clinicaltrials.gov/study/NCT07813039"
+        }
+      ],
+      "decision": "identified",
+      "note": "VX-581 identity and sponsor-reported CFTR corrector mechanism are supported. NCT07813039 is a healthy-adult formulation bioavailability study, not evidence of efficacy in CF patients. NCT07283770 includes healthy and CF cohorts; source roles and cohort-specific phase uncertainty remain. No direct-binding site or clinical efficacy is established by this mapping.",
+      "products": [
+        "vx-581"
+      ],
+      "references": [
+        "https://investors.vrtx.com/news-releases/news-release-details/vertex-reports-second-quarter-2026-financial-results",
+        "https://clinicaltrials.gov/study/NCT07813039",
+        "https://clinicaltrials.gov/study/NCT07283770"
+      ],
+      "reviewedAt": "2026-10-28"
+    }
+  ],
+  "products": {
+    "vx-581": {
+      "name": "VX-581",
+      "mechanism": "Sponsor-described next-generation 3.0 CFTR corrector. Direct binding site, clinical efficacy and drug-specific phase in CF patients are not established by this mapping.",
+      "relationship": "corrector",
+      "target": {
+        "id": "CHEMBL4051",
+        "name": "Cystic fibrosis transmembrane conductance regulator (CFTR)",
+        "type": "SINGLE PROTEIN",
+        "organism": "Homo sapiens"
+      },
+      "references": [
+        "https://investors.vrtx.com/news-releases/news-release-details/vertex-reports-second-quarter-2026-financial-results"
+      ],
+      "diseaseRelevance": "underlying_disease_mechanism",
+      "reviewedAt": "2026-10-28",
+      "evidenceBasis": "sponsor_reported_mechanism",
+      "cohortCaveat": "NCT07813039 studies healthy adult men; its Phase 1 registration is not evidence of CF patient efficacy. NCT07283770 contains healthy and CF cohorts."
+    }
+  },
+  "contexts": {
+    "ctgov:NCT07813039": {
+      "reviewedSourceVersion": "3b8b82ebe7babc1f606216cdcc35fd99bde5431e7dc8c78a9717b25038f42fbc",
+      "contextHash": "b84038519f5bfd94dc6b8f271d57a2908ba8f823c70df058ff03c5f65c4ce2e5"
+    }
+  },
+  "protocolReview": {
+    "registration": "ctgov:NCT07813039",
+    "previousSourceVersion": "8df2ac943183a68101eea80bdf8cd541ec84cd3dbd1f5c4e003302881da5fd86",
+    "currentSourceVersion": "3b8b82ebe7babc1f606216cdcc35fd99bde5431e7dc8c78a9717b25038f42fbc",
+    "checkedAt": "2026-10-28T10:41:03.639Z",
+    "reasonForFlag": "Enrollment type in the protocol-design context changed from ESTIMATED to ACTUAL.",
+    "otherChanges": "Recruitment changed to ACTIVE_NOT_RECRUITING; dates and contacts changed. Intervention, descriptions, formulation comparison, phase and healthy-volunteer population are unchanged.",
+    "materialProtocolChanges": false,
+    "sourceUrl": "https://clinicaltrials.gov/api/v2/studies/NCT07813039"
+  },
+  "additionalEvidence": [
+    {
+      "source": "Vertex sponsor disclosure",
+      "url": "https://investors.vrtx.com/news-releases/news-release-details/vertex-reports-second-quarter-2026-financial-results",
+      "publicationDate": "2026-08-03",
+      "checkedAt": "2026-10-28T10:41:03.639Z",
+      "excerpt": "VX-581 and VX-272, additional next-generation 3.0 CFTR correctors.",
+      "scope": "Supports sponsor-reported mechanism; not proof of direct binding or efficacy, and not a current recruitment-status source."
+    }
+  ]
+}

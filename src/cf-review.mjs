@@ -5,9 +5,16 @@ import { canonical } from './store.mjs';
 export const hashReview = value => createHash('sha256').update(canonical(value)).digest('hex');
 const nameHash = name => createHash('sha256').update(name.trim().toLowerCase()).digest('hex');
 const keyOf = trial => `${trial.source}:${trial.sourceId}`;
+const ledger = JSON.parse(readFileSync(new URL('../data/cf-intervention-review.json', import.meta.url), 'utf8'));
+const contexts = JSON.parse(readFileSync(new URL('../data/cf-review-contexts.json', import.meta.url), 'utf8'));
+const updates = JSON.parse(readFileSync(new URL('../data/cf-review-updates.json', import.meta.url), 'utf8'));
+if (updates.baseVersion !== ledger.version) throw new Error('CF review update base version mismatch');
+for (const item of updates.items) if (!ledger.items.some(i => i.nameHash === item.nameHash)) throw new Error('CF review update refers to an unknown mapping');
 export const CF_REVIEW = {
-  ledger: JSON.parse(readFileSync(new URL('../data/cf-intervention-review.json', import.meta.url), 'utf8')),
-  contexts: JSON.parse(readFileSync(new URL('../data/cf-review-contexts.json', import.meta.url), 'utf8')),
+  ledger: {...ledger,version:updates.version,updatedAt:updates.reviewedAt,
+    items:ledger.items.map(item => updates.items.find(i => i.nameHash === item.nameHash) ?? item),products:{...ledger.products,...updates.products}},
+  contexts: {...contexts,version:updates.version,ledgerVersion:updates.version,registrations:{...contexts.registrations,...updates.contexts}},
+  updates,
 };
 
 // Status/contact timestamps are not protocol evidence; changed protocols must be reviewed again.
@@ -43,7 +50,7 @@ export function reviewedEntry(entry, trial, bundle) {
   const source = item.registrations.find(r => r.id === keyOf(trial));
   const matches = context?.reviewedSourceVersion === source.versionHash && context?.contextHash && context.contextHash === trial.reviewContextHash;
   return {status:matches ? 'applied' : 'review_required',reason:matches ? 'reviewed_protocol_context_matches' : 'reviewed_protocol_context_changed_or_missing',
-    version:bundle.ledger.version,reviewedAt:bundle.ledger.reviewedAt,registration:keyOf(trial),name:entry.name,decision:item.decision,note:item.note,
+    version:bundle.ledger.version,reviewedAt:item.reviewedAt ?? bundle.ledger.reviewedAt,registration:keyOf(trial),name:entry.name,decision:item.decision,note:item.note,
     reviewedSourceVersion:source.versionHash,currentSourceVersion:trial.versionHash,contextHash:trial.reviewContextHash,
     references:[...new Set([...item.references,source.url])],item};
 }
@@ -57,7 +64,7 @@ export async function resolveReviewed(review, bundle, evidence, options, reviewE
         const resolution = {status:'resolved',method:'registration-scoped reviewed identity',query:name,candidates:[{id:product.drugId ?? `reviewed:${name}`,name:product.name}],evidence:[reviewEvidence]};
         const references = [...new Set([...review.references,...product.references])].map(ref_url => ({ref_url}));
         const targets = {status:'ok',evidence:[reviewEvidence],integratedMechanisms:[],mechanisms:[{target:product.target,mechanism:product.mechanism,relationship:product.relationship,actionType:product.relationship,references}]};
-        components.push({status:'ok',resolution,targets,review:{...review,component:name,programStatus:product.programStatus,diseaseRelevance:product.diseaseRelevance}});
+        components.push({status:'ok',resolution,targets,review:{...review,component:name,programStatus:product.programStatus,diseaseRelevance:product.diseaseRelevance,evidenceBasis:product.evidenceBasis,cohortCaveat:product.cohortCaveat}});
       } else {
         const resolution = await evidence.resolve(name,options);
         const targets = resolution.status === 'resolved' ? await evidence.targets(resolution.candidates[0].id,options) : null;

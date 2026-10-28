@@ -69,8 +69,8 @@ test('multi-component mappings preserve all ingredients, partial failures and pi
   assert.ok(service.compare(failed.snapshotId,result.snapshotId).added.length === 2);
 });
 test('unknown targets, non-drug decisions and non-CF source exclusions remain inspectable through MCP and exports',async t=>{
-  const rec=record('NCT07283770','VX-581');const excluded=record('NCT00000002');excluded.raw.protocolSection.conditionsModule.conditions=['Non-cystic fibrosis bronchiectasis'];excluded.trial=normalizeCtgov(excluded.raw);
-  const bundle=bundleFor([rec],['vx-581'],['vx-581']);bundle.ledger.items[0].decision='identified_target_unknown';const {service,store,evidence}=setup(t,[rec,excluded],bundle);
+  const rec=record('NCT07437105','VX-272');const excluded=record('NCT00000002');excluded.raw.protocolSection.conditionsModule.conditions=['Non-cystic fibrosis bronchiectasis'];excluded.trial=normalizeCtgov(excluded.raw);
+  const bundle=bundleFor([rec],['vx-272'],['vx-272']);bundle.ledger.items[0].decision='identified_target_unknown';const {service,store,evidence}=setup(t,[rec,excluded],bundle);
   const server=createMcpServer(store,{evidence,landscapes:service});const [a,b]=InMemoryTransport.createLinkedPair();const client=new Client({name:'cf-runtime',version:'1'});
   await server.connect(b);await client.connect(a);t.after(async()=>{await client.close();await server.close();});
   const start=await client.callTool({name:'get_clinical_target_landscape',arguments:{disease:'cystic fibrosis',sources:['ctgov']}});const id=start.structuredContent.jobId;await service.running.get(id).promise;
@@ -91,4 +91,16 @@ test('reviewed non-drug entries skip drug lookup and policy revisions cannot be 
   const excluded=service.get(first.jobId,{section:'excluded'});assert.equal(excluded.items[0].review.decision,'non_drug');
   const changed=structuredClone(bundle);changed.ledger.version='future';changed.contexts.ledgerVersion='future';service.cfReview=changed;
   const second=await finish(service);assert.notEqual(first.cfReview.hash,second.cfReview.hash);assert.throws(()=>service.compare(first.snapshotId,second.snapshotId),/same disease and collection parameters/);
+});
+
+test('VX-581 review update supports CFTR correction without direct binding or CF efficacy claims',async t=>{
+  const rec=record('NCT07813039','VX-581');const bundle=bundleFor([rec],['vx-581'],['vx-581']);
+  const {service}=setup(t,[rec],bundle);const job=await finish(service);
+  assert.equal(job.items[0].target.id,'CHEMBL4051');assert.equal(job.items[0].relationship,'corrector');
+  assert.notEqual(job.items[0].mechanismCategory,'direct_molecular_target');assert.equal(job.items[0].highestSupportedPhaseInDisease,null);
+  assert.equal(job.items[0].supportingRegistrations[0].clinicalDevelopmentEvidence,false);
+  assert.equal(job.items[0].supportingRegistrations[0].review.evidenceBasis,'sponsor_reported_mechanism');
+  assert.equal(CF_REVIEW.ledger.items.find(i=>i.namePreview==='vx-581').reviewedAt,'2026-10-28');
+  assert.equal(CF_REVIEW.ledger.items.find(i=>i.namePreview==='vx-272').reviewedAt,undefined);
+  assert.equal(CF_REVIEW.ledger.products['vx-272'].target,null);
 });

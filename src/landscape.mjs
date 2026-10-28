@@ -138,7 +138,7 @@ export class LandscapeService {
         if (this.cfReview.contexts.contextSchema !== 1 || this.cfReview.contexts.ledgerVersion !== this.cfReview.ledger.version) throw new Error('CF review/context versions do not match');
         const hash = hashReview(this.cfReview);
         const {raw,...evidence} = this.store.evidencePut(hash, {source:'cf_review',url:`local:cf-review/${hash}`,raw:this.cfReview,retrievedAt:new Date().toISOString(),lineage:'AI-assisted registration-scoped review; references are not independent clinical validation'});
-        job.cfReview = {version:this.cfReview.ledger.version,reviewedAt:this.cfReview.ledger.reviewedAt,reviewStatus:this.cfReview.ledger.reviewStatus,contextSchema:this.cfReview.contexts.contextSchema,hash,evidence}; this.save(job);
+        job.cfReview = {version:this.cfReview.ledger.version,reviewedAt:this.cfReview.ledger.reviewedAt,updatedAt:this.cfReview.ledger.updatedAt ?? this.cfReview.ledger.reviewedAt,reviewStatus:this.cfReview.ledger.reviewStatus,contextSchema:this.cfReview.contexts.contextSchema,hash,evidence}; this.save(job);
       }
       const e = job.cfReview.evidence;
       bundle = this.store.evidenceVersion(e.key,e.hash,e.retrievedAt)?.raw;
