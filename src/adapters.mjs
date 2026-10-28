@@ -1,7 +1,7 @@
 import { JsonClient, SourceError } from './http-client.mjs';
 
 export const SOURCES = ['ctgov', 'ctis', 'isrctn'];
-export const NORMALIZER_VERSION = '4';
+export const NORMALIZER_VERSION = '5';
 export const RECRUITMENT_STATUSES = ['unknown','recruiting','not_yet_recruiting','active_not_recruiting','completed','terminated','withdrawn','suspended','by_invitation'];
 export const STUDY_TYPES = ['interventional', 'observational', 'expanded_access'];
 export function validateFilters({ recruitmentStatus, studyType, primaryPurpose } = {}) {
@@ -199,7 +199,9 @@ export function normalizeIsrctn(raw, retrievedAt = new Date().toISOString()) {
     recruitmentStatusBasis: raw.who ? 'ISRCTN WHO export recruitment_status (registry may derive it from dates)' : 'ISRCTN explicit override; otherwise unknown',
     // Use the registry's published status rather than computing it from dates locally.
     recruitmentStatus: ({ Recruiting: 'recruiting', 'Not yet recruiting': 'not_yet_recruiting',
-      'No longer recruiting': 'active_not_recruiting', 'No longer recruited': 'active_not_recruiting', Stopped: 'terminated', Suspended: 'suspended', Completed: 'completed', 'Enrolling by invitation': 'by_invitation' })[statusRaw] ?? 'unknown',
+      'No longer recruiting': 'unknown', 'No longer recruited': 'unknown', Stopped: 'terminated', Suspended: 'suspended', Completed: 'completed', 'Enrolling by invitation': 'by_invitation' })[statusRaw] ?? 'unknown',
+    activityStatusBasis: ['No longer recruiting', 'No longer recruited'].includes(statusRaw) ? 'Recruitment closed; overall study activity not established by the XML export' : 'Published registry status',
+    reportedCompletionDate: xmlText(raw.who?.main?.results_date_completed) ?? xmlText(trial.trialDesign?.overallEndDate),
     statusRaw, regulatoryStatus: null, countryStatuses: [],
     hasResults: xmlList(trial.outputs?.output).some(x => ['basicresults', 'plainenglishresults', 'results'].includes(x['@_outputType'])) ? true : null,
     sourceUpdatedAt: text(trial['@_lastUpdated']), retrievedAt,

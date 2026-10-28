@@ -10,7 +10,7 @@ import {LandscapeService,extractInterventions} from '../src/landscape.mjs';
 import {createMcpServer} from '../src/mcp.mjs';
 import {normalizeCtgov} from '../src/adapters.mjs';
 import {ctgovRecord} from './fixtures.mjs';
-import {CF_REVIEW,reviewContext,cfScope} from '../src/cf-review.mjs';
+import {CF_REVIEW,reviewContext,cfScope,reviewedEntry} from '../src/cf-review.mjs';
 const nameHash=n=>createHash('sha256').update(n).digest('hex');
 // Synthetic protocols and targets: test applicability, never substitute for medical evidence.
 function record(id='NCT05248230',name='4D-710') {
@@ -22,7 +22,7 @@ function record(id='NCT05248230',name='4D-710') {
 }
 function bundleFor(records,names=['4d-710'],products=['4d-710']) {
   return {ledger:{...structuredClone(CF_REVIEW.ledger),items:names.map(name=>({nameHash:nameHash(name),registrations:[{id:`ctgov:${records[0].trial.sourceId}`,versionHash:'reviewed-version',url:'https://example.org/synthetic'}],decision:'identified',note:'Synthetic reviewed mapping',products,references:[]})),excludedRegistrations:[]},
-    contexts:{ledgerVersion:CF_REVIEW.ledger.version,contextSchema:1,registrations:{[`ctgov:${records[0].trial.sourceId}`]:{reviewedSourceVersion:'reviewed-version',contextHash:reviewContext(records[0].trial,records[0].raw)}}}};
+    contexts:{ledgerVersion:CF_REVIEW.ledger.version,contextSchema:2,registrations:{[`ctgov:${records[0].trial.sourceId}`]:{reviewedSourceVersion:'reviewed-version',contextHash:reviewContext(records[0].trial,records[0].raw)}}}};
 }
 function evidenceFor(store,{fail=false,diseaseId='MONDO_0009061'}={}) {
   const e=store.evidencePut('fixture',{source:'fixture',url:'https://example.org/synthetic',raw:{fixture:true},retrievedAt:new Date().toISOString()});const {raw,...ref}=e;let attempts=0;
@@ -103,4 +103,31 @@ test('VX-581 review update supports CFTR correction without direct binding or CF
   assert.equal(CF_REVIEW.ledger.items.find(i=>i.namePreview==='vx-581').reviewedAt,'2026-10-28');
   assert.equal(CF_REVIEW.ledger.items.find(i=>i.namePreview==='vx-272').reviewedAt,undefined);
   assert.equal(CF_REVIEW.ledger.products['vx-272'].target,null);
+});
+
+test('population changes invalidate reviewed contexts; routine recruitment changes do not',()=>{
+  const {trial,raw}=record();
+  raw.protocolSection.eligibilityModule={healthyVolunteers:true,eligibilityCriteria:'Healthy adults only'};
+  const before=reviewContext(trial,raw);
+  const legacy=reviewContext(trial,raw,1);
+  const bundle=bundleFor([{trial,raw}]);
+  trial.reviewContextHash=before;
+  assert.equal(reviewedEntry({name:'4D-710'},trial,bundle).status,'applied');
+  raw.protocolSection.statusModule={overallStatus:'RECRUITING'};
+  assert.equal(reviewContext(trial,raw),before);
+  raw.protocolSection.eligibilityModule={healthyVolunteers:false,eligibilityCriteria:'Confirmed CF required'};
+  assert.notEqual(reviewContext(trial,raw),before);
+  trial.reviewContextHash=reviewContext(trial,raw);
+  assert.equal(reviewedEntry({name:'4D-710'},trial,bundle).status,'review_required');
+  assert.equal(reviewContext(trial,raw,1),legacy);
+  const ctis={source:'ctis',title:'CF',conditions:['CF'],phases:[]};
+  const detail={detail:{authorizedApplication:{authorizedPartI:{population:{inclusionCriteria:'Healthy adults'}}}}};
+  const ctisBefore=reviewContext(ctis,detail);
+  detail.detail.authorizedApplication.authorizedPartI.population.inclusionCriteria='CF patients';
+  assert.notEqual(reviewContext(ctis,detail),ctisBefore);
+  const isrctn={source:'isrctn',title:'CF',conditions:['CF'],phases:[]};
+  const xml={trial:{participants:{inclusionCriteria:'Healthy adults',recruitmentEnd:'2026'}}};
+  const original=reviewContext(isrctn,xml);
+  xml.trial.participants.recruitmentEnd='2027';assert.equal(reviewContext(isrctn,xml),original);
+  xml.trial.participants.inclusionCriteria='CF patients';assert.notEqual(reviewContext(isrctn,xml),original);
 });

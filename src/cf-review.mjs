@@ -6,25 +6,27 @@ export const hashReview = value => createHash('sha256').update(canonical(value))
 const nameHash = name => createHash('sha256').update(name.trim().toLowerCase()).digest('hex');
 const keyOf = trial => `${trial.source}:${trial.sourceId}`;
 const ledger = JSON.parse(readFileSync(new URL('../data/cf-intervention-review.json', import.meta.url), 'utf8'));
-const contexts = JSON.parse(readFileSync(new URL('../data/cf-review-contexts.json', import.meta.url), 'utf8'));
+const populationContexts = JSON.parse(readFileSync(new URL('../data/cf-review-contexts-v2.json', import.meta.url), 'utf8'));
 const updates = JSON.parse(readFileSync(new URL('../data/cf-review-updates.json', import.meta.url), 'utf8'));
+if (populationContexts.baseReviewVersion !== updates.version) throw new Error('Population context review version mismatch');
 if (updates.baseVersion !== ledger.version) throw new Error('CF review update base version mismatch');
 for (const item of updates.items) if (!ledger.items.some(i => i.nameHash === item.nameHash)) throw new Error('CF review update refers to an unknown mapping');
 export const CF_REVIEW = {
-  ledger: {...ledger,version:updates.version,updatedAt:updates.reviewedAt,
+  ledger: {...ledger,version:populationContexts.version,updatedAt:updates.reviewedAt,
     items:ledger.items.map(item => updates.items.find(i => i.nameHash === item.nameHash) ?? item),products:{...ledger.products,...updates.products}},
-  contexts: {...contexts,version:updates.version,ledgerVersion:updates.version,registrations:{...contexts.registrations,...updates.contexts}},
+  contexts: populationContexts,
   updates,
 };
 
 // Status/contact timestamps are not protocol evidence; changed protocols must be reviewed again.
-export function reviewContext(trial, raw) {
+export function reviewContext(trial, raw, schema = 2) {
+  if (![1,2].includes(schema)) throw new Error(`Unsupported review context schema: ${schema}`);
   let protocol;
   if (trial.source === 'ctgov') {
     const p = raw.protocolSection ?? {};
-    protocol = { description:p.descriptionModule ?? null, interventions:p.armsInterventionsModule ?? null, design:p.designModule ?? null };
+    protocol = { description:p.descriptionModule ?? null, interventions:p.armsInterventionsModule ?? null, design:p.designModule ?? null, ...(schema >= 2 ? {population:p.eligibilityModule ?? null} : {}) };
   } else if (trial.source === 'ctis') protocol = raw.detail?.authorizedApplication?.authorizedPartI ?? null;
-  else protocol = { description:raw.trial?.trialDescription ?? null, interventions:raw.trial?.interventions ?? null };
+  else protocol = { description:raw.trial?.trialDescription ?? null, interventions:raw.trial?.interventions ?? null, ...(schema >= 2 ? {population:Object.fromEntries(Object.entries(raw.trial?.participants ?? {}).filter(([key]) => !/recruitment|contact/i.test(key))), whoPopulation:Object.fromEntries(Object.entries(raw.who?.main ?? {}).filter(([key]) => /inclusion|exclusion|age|gender|sex|participant/i.test(key)))} : {}) };
   return hashReview({ title:trial.title, conditions:trial.conditions, phases:trial.phases, primaryPurpose:trial.primaryPurpose ?? null, protocol });
 }
 export function cfScope(trial, bundle, view) {

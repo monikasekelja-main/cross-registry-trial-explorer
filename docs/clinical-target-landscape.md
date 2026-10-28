@@ -174,3 +174,29 @@ Runtime policy `2026-10-28.1` adds the scoped update in `data/cf-review-updates.
 For NCT07813039, comparison with the original reviewed raw version showed enrollment type changing from estimated to actual, recruitment changing to active-not-recruiting, and date/contact changes. The intervention, formulation-comparison design, description, phase and healthy-volunteer population were unchanged. The updated context was explicitly reviewed and accepted; fingerprint rules were not relaxed. The companion NCT07283770 protocol context was unchanged.
 
 Vertex's 3 August 2026 quarterly update explicitly describes VX-581 as a next-generation 3.0 CFTR corrector. The mapping therefore records CFTR with relationship `corrector`, supported by the sponsor disclosure rather than inferred from coadministration. A direct binding site or patient efficacy is not established. NCT07813039 is a healthy-adult formulation bioavailability study; it must not establish a drug-specific clinical phase or efficacy in CF patients. The mixed healthy/CF cohorts in NCT07283770 retain cohort and role uncertainty. VX-272 and all unrelated mappings retain their prior review scope.
+
+### Ongoing status and population safeguards (28 October 2026)
+
+ISRCTN's “No longer recruiting” (including “No longer recruited”) is normalized
+as `unknown`, rather than `active_not_recruiting`: closed recruitment alone does
+not establish overall study activity. Such records remain available in historical
+views, but are excluded from ongoing and recruiting views. Explicit published
+completed, terminated, suspended and recruiting labels retain their existing
+meaning. Reported completion dates are preserved as evidence, never treated as
+proof of actual completion because the export also contains planned future dates.
+Exclusion JSON includes the original label, activity explanation and reported date.
+Normalizer version 5 creates new source versions without changing old snapshots.
+
+CF review policy `2026-10-28.2` uses context schema 2. It adds ClinicalTrials.gov
+eligibility (including healthy-volunteer eligibility) and ISRCTN participant and
+WHO inclusion/exclusion, age and sex fields to the existing protocol fingerprint.
+CTIS already fingerprints the full authorized Part I, including population fields.
+Routine recruitment/contact fields are excluded from the added ISRCTN population
+fingerprint. A population change requires review before a registration-scoped
+mapping can be reapplied; it does not silently inherit the earlier interpretation.
+
+`data/cf-review-contexts-v2.json` was derived from the exact source versions pinned
+by the original reviewed contexts and the VX-581 update, not from newly fetched
+records. It extends change detection; it is not a new clinical review of every
+population. Original schema 1 data and historical snapshot bundles remain intact;
+resumed jobs use their pinned context schema.

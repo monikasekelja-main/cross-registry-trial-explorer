@@ -61,3 +61,13 @@ test('ISRCTN imports work with local filtering, raw retrieval and HTTP routes', 
   assert.equal((await fetch(base + '/trials/isrctn/ISRCTN12345678')).status, 200);
   assert.equal((await fetch(base + '/trials/isrctn/ISRCTN12345678/history')).status, 200);
 });
+
+test('closed recruitment does not establish ongoing activity or actual completion',()=>{
+  for(const date of ['19/04/2003','01/01/2029']) {
+    const raw={trial:{'@_publicIdentifierCanonical':'ISRCTN98785888',trialDescription:{title:'CF trial'},participants:{},trialDesign:{}},who:{main:{recruitment_status:'No longer recruiting',results_date_completed:date}}};
+    const trial=normalizeIsrctn(raw);
+    assert.equal(trial.recruitmentStatus,'unknown');assert.equal(trial.statusRaw,'No longer recruiting');
+    assert.equal(trial.reportedCompletionDate,date);assert.match(trial.activityStatusBasis,/not established/);
+    raw.who.main.recruitment_status='Completed';assert.equal(normalizeIsrctn(raw).recruitmentStatus,'completed');
+  }
+});

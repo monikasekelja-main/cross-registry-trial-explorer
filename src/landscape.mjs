@@ -135,7 +135,7 @@ export class LandscapeService {
     let bundle;
     if (job.processingVersion === 'cf-review-v1' && job.disease.id === CF_REFERENCE.diseaseId) {
       if (!job.cfReview) {
-        if (this.cfReview.contexts.contextSchema !== 1 || this.cfReview.contexts.ledgerVersion !== this.cfReview.ledger.version) throw new Error('CF review/context versions do not match');
+        if (![1,2].includes(this.cfReview.contexts.contextSchema) || this.cfReview.contexts.ledgerVersion !== this.cfReview.ledger.version) throw new Error('CF review/context versions do not match');
         const hash = hashReview(this.cfReview);
         const {raw,...evidence} = this.store.evidencePut(hash, {source:'cf_review',url:`local:cf-review/${hash}`,raw:this.cfReview,retrievedAt:new Date().toISOString(),lineage:'AI-assisted registration-scoped review; references are not independent clinical validation'});
         job.cfReview = {version:this.cfReview.ledger.version,reviewedAt:this.cfReview.ledger.reviewedAt,updatedAt:this.cfReview.ledger.updatedAt ?? this.cfReview.ledger.reviewedAt,reviewStatus:this.cfReview.ledger.reviewStatus,contextSchema:this.cfReview.contexts.contextSchema,hash,evidence}; this.save(job);
@@ -154,7 +154,7 @@ export class LandscapeService {
         this.store.commitSource(source, collection, { query: job.disease.name, landscapeJobId: job.id, limit: job.parameters.limitPerSource }, started);
         for (const { trial, raw } of collection.records) {
           const saved = this.store.get(source, trial.sourceId);
-          job.registrations.push({ ...trial, versionHash: saved.versionHash, interventionDetails: extractInterventions(trial, raw), ...(bundle ? {reviewContextHash:reviewContext(trial,raw)} : {}) });
+          job.registrations.push({ ...trial, versionHash: saved.versionHash, interventionDetails: extractInterventions(trial, raw), ...(bundle ? {reviewContextHash:reviewContext(trial,raw,bundle.contexts.contextSchema)} : {}) });
         }
         job.sources.push({ source, status: 'ok', imported: collection.records.length, upstreamTotal: collection.upstreamTotal, truncated: collection.truncated,
           scanned: collection.scanned, reconciled: collection.reconciled, reportedTotals: collection.reportedTotals, upstreamTotalScope: collection.upstreamTotalScope, completedAt: new Date().toISOString() });
@@ -168,7 +168,7 @@ export class LandscapeService {
     const statusSelected = job.registrations.filter(t => job.parameters.view === 'historical' || (job.parameters.view === 'recruiting' ? t.recruitmentStatus === 'recruiting' : ongoing.has(t.recruitmentStatus)));
     if (bundle) for (const trial of job.registrations) trial.cfScope = cfScope(trial,bundle,job.parameters.view);
     const selected = statusSelected.filter(t => t.cfScope?.status !== 'excluded');
-    job.excludedRegistrations = job.registrations.filter(t => !selected.includes(t)).map(t => ({ registration:keyOf(t),status:t.recruitmentStatus,sourceUrl:t.sourceUrl,versionHash:t.versionHash,
+    job.excludedRegistrations = job.registrations.filter(t => !selected.includes(t)).map(t => ({ registration:keyOf(t),status:t.recruitmentStatus,statusRaw:t.statusRaw,activityStatusBasis:t.activityStatusBasis,reportedCompletionDate:t.reportedCompletionDate,sourceUrl:t.sourceUrl,versionHash:t.versionHash,
       reason:t.cfScope?.status === 'excluded' ? t.cfScope.reason : 'Status does not establish membership in requested view; unknown excluded',scopeReview:t.cfScope }));
     job.groups = groupRegistrations(selected);
     const entries = selected.flatMap(t => t.interventionDetails.flatMap(intervention => {
